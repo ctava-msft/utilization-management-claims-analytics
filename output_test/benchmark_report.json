@@ -1,0 +1,32 @@
+{
+  "comparisons": [
+    {
+      "metric_name": "denial_rate",
+      "internal_value": 0.0674,
+      "baseline_value": 0.08,
+      "variance": -0.1575,
+      "threshold_pct": 0.15,
+      "exceeds_threshold": true,
+      "direction": "below"
+    },
+    {
+      "metric_name": "oon_rate",
+      "internal_value": 0.4606,
+      "baseline_value": 0.05,
+      "variance": 8.212,
+      "threshold_pct": 0.2,
+      "exceeds_threshold": true,
+      "direction": "above"
+    },
+    {
+      "metric_name": "cost_per_claim",
+      "internal_value": 2231.58,
+      "baseline_value": 1200.0,
+      "variance": 0.8596,
+      "threshold_pct": 0.1,
+      "exceeds_threshold": true,
+      "direction": "above"
+    }
+  ],
+  "flagged_count": 3
+}

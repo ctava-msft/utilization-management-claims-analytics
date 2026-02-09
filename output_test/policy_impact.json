@@ -1,0 +1,32 @@
+{
+  "impacts": [
+    {
+      "policy_id": "POL-001",
+      "description": "Removed prior auth requirement for imaging services",
+      "effective_date": "2024-07-01",
+      "affected_services": [
+        "CPT-7"
+      ],
+      "pre_metrics": {
+        "volume": 12,
+        "total_allowed": 5455.330000000001,
+        "avg_allowed": 454.6108333333334,
+        "denial_rate": 0.16666666666666666,
+        "oon_rate": 0.0
+      },
+      "post_metrics": {
+        "volume": 15,
+        "total_allowed": 292821.27999999997,
+        "avg_allowed": 19521.418666666665,
+        "denial_rate": 0.13333333333333333,
+        "oon_rate": 0.06666666666666667
+      },
+      "volume_change_pct": 25.0,
+      "cost_change_pct": 5267.62,
+      "denial_rate_change": -0.0333,
+      "oon_rate_change": 0.0667,
+      "rebound_detected": true,
+      "rebound_detail": "Post-removal volume (15) is 125% of pre-removal volume (12). Utilization did not decrease as expected."
+    }
+  ]
+}

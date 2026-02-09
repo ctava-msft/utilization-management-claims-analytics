@@ -1,0 +1,177 @@
+[
+  {
+    "rule_name": "high_volume_provider",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0004",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "peer_mean": 31.8,
+      "peer_std": 37.9,
+      "z_score": 3.12
+    },
+    "threshold": 107.6,
+    "actual_value": 150.0,
+    "description": "Provider FRAUD-PROV-0004 has 150 claims (z-score=3.12, threshold=108)"
+  },
+  {
+    "rule_name": "high_volume_provider",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0002",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "peer_mean": 31.8,
+      "peer_std": 37.9,
+      "z_score": 3.12
+    },
+    "threshold": 107.6,
+    "actual_value": 150.0,
+    "description": "Provider FRAUD-PROV-0002 has 150 claims (z-score=3.12, threshold=108)"
+  },
+  {
+    "rule_name": "high_volume_provider",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0001",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "peer_mean": 31.8,
+      "peer_std": 37.9,
+      "z_score": 3.12
+    },
+    "threshold": 107.6,
+    "actual_value": 150.0,
+    "description": "Provider FRAUD-PROV-0001 has 150 claims (z-score=3.12, threshold=108)"
+  },
+  {
+    "rule_name": "high_volume_provider",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0000",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "peer_mean": 31.8,
+      "peer_std": 37.9,
+      "z_score": 3.12
+    },
+    "threshold": 107.6,
+    "actual_value": 150.0,
+    "description": "Provider FRAUD-PROV-0000 has 150 claims (z-score=3.12, threshold=108)"
+  },
+  {
+    "rule_name": "high_volume_provider",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0003",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "peer_mean": 31.8,
+      "peer_std": 37.9,
+      "z_score": 3.12
+    },
+    "threshold": 107.6,
+    "actual_value": 150.0,
+    "description": "Provider FRAUD-PROV-0003 has 150 claims (z-score=3.12, threshold=108)"
+  },
+  {
+    "rule_name": "high_cost_provider",
+    "entity_type": "provider",
+    "entity_id": "PROV-000008",
+    "severity": "high",
+    "feature_values": {
+      "total_allowed": 539067.71,
+      "peer_mean": 71004.89,
+      "peer_std": 97281.53,
+      "z_score": 4.81
+    },
+    "threshold": 265567.96,
+    "actual_value": 539067.71,
+    "description": "Provider PROV-000008 has $539,067.71 total allowed (z-score=4.81, threshold=$265,568)"
+  },
+  {
+    "rule_name": "new_entity_high_volume",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0004",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "entity_age_days": 88,
+      "specialty": "DME Supplier"
+    },
+    "threshold": 25.0,
+    "actual_value": 150.0,
+    "description": "New provider FRAUD-PROV-0004 (age=88d) has 150 claims, exceeding the 90th percentile of established providers (25)"
+  },
+  {
+    "rule_name": "new_entity_high_volume",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0002",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "entity_age_days": 89,
+      "specialty": "DME Supplier"
+    },
+    "threshold": 25.0,
+    "actual_value": 150.0,
+    "description": "New provider FRAUD-PROV-0002 (age=89d) has 150 claims, exceeding the 90th percentile of established providers (25)"
+  },
+  {
+    "rule_name": "new_entity_high_volume",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0001",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "entity_age_days": 89,
+      "specialty": "DME Supplier"
+    },
+    "threshold": 25.0,
+    "actual_value": 150.0,
+    "description": "New provider FRAUD-PROV-0001 (age=89d) has 150 claims, exceeding the 90th percentile of established providers (25)"
+  },
+  {
+    "rule_name": "new_entity_high_volume",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0000",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "entity_age_days": 89,
+      "specialty": "DME Supplier"
+    },
+    "threshold": 25.0,
+    "actual_value": 150.0,
+    "description": "New provider FRAUD-PROV-0000 (age=89d) has 150 claims, exceeding the 90th percentile of established providers (25)"
+  },
+  {
+    "rule_name": "new_entity_high_volume",
+    "entity_type": "provider",
+    "entity_id": "FRAUD-PROV-0003",
+    "severity": "high",
+    "feature_values": {
+      "total_claims": 150,
+      "entity_age_days": 88,
+      "specialty": "DME Supplier"
+    },
+    "threshold": 25.0,
+    "actual_value": 150.0,
+    "description": "New provider FRAUD-PROV-0003 (age=88d) has 150 claims, exceeding the 90th percentile of established providers (25)"
+  },
+  {
+    "rule_name": "high_cost_provider",
+    "entity_type": "provider",
+    "entity_id": "PROV-000001",
+    "severity": "medium",
+    "feature_values": {
+      "total_allowed": 293362.64,
+      "peer_mean": 71004.89,
+      "peer_std": 97281.53,
+      "z_score": 2.29
+    },
+    "threshold": 265567.96,
+    "actual_value": 293362.64,
+    "description": "Provider PROV-000001 has $293,362.64 total allowed (z-score=2.29, threshold=$265,568)"
+  }
+]

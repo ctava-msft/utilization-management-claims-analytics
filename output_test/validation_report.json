@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "total_rows": 1750,
+  "critical_issues": [],
+  "advisory_issues": [
+    {
+      "level": "advisory",
+      "rule": "high_null_rate",
+      "message": "Column 'denial_reason_category' has 93.3% nulls",
+      "affected_rows": 1632,
+      "examples": []
+    }
+  ]
+}

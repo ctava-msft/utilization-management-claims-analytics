@@ -1,0 +1,147 @@
+{
+  "total_claims": 1750,
+  "total_denials": 118,
+  "total_appeals": 18,
+  "total_grievances": 26,
+  "overall_denial_rate": 0.0674,
+  "overall_appeal_rate": 0.1525,
+  "estimated_admin_cost": 6300.0,
+  "categories": [
+    {
+      "category": "coding_error",
+      "denial_count": 28,
+      "appeal_count": 4,
+      "appeal_rate": 0.1429,
+      "grievance_count": 0,
+      "total_billed": 19277.82,
+      "total_allowed": 12648.31
+    },
+    {
+      "category": "untimely_filing",
+      "denial_count": 24,
+      "appeal_count": 1,
+      "appeal_rate": 0.0417,
+      "grievance_count": 1,
+      "total_billed": 192888.12,
+      "total_allowed": 93456.95
+    },
+    {
+      "category": "not_covered",
+      "denial_count": 19,
+      "appeal_count": 0,
+      "appeal_rate": 0.0,
+      "grievance_count": 1,
+      "total_billed": 6564.74,
+      "total_allowed": 3866.85
+    },
+    {
+      "category": "medical_necessity",
+      "denial_count": 17,
+      "appeal_count": 8,
+      "appeal_rate": 0.4706,
+      "grievance_count": 1,
+      "total_billed": 25610.56,
+      "total_allowed": 16009.44
+    },
+    {
+      "category": "authorization_missing",
+      "denial_count": 17,
+      "appeal_count": 4,
+      "appeal_rate": 0.2353,
+      "grievance_count": 0,
+      "total_billed": 14845.98,
+      "total_allowed": 10651.48
+    },
+    {
+      "category": "duplicate",
+      "denial_count": 13,
+      "appeal_count": 1,
+      "appeal_rate": 0.0769,
+      "grievance_count": 0,
+      "total_billed": 6055.21,
+      "total_allowed": 4212.2
+    }
+  ],
+  "top_appeal_providers": [
+    {
+      "provider_id": "PROV-000030",
+      "total_denials": 4,
+      "total_appeals": 2,
+      "appeal_rate": 0.5,
+      "top_denial_reason": "authorization_missing",
+      "total_billed_denied": 8156.31
+    },
+    {
+      "provider_id": "PROV-000007",
+      "total_denials": 3,
+      "total_appeals": 2,
+      "appeal_rate": 0.6667,
+      "top_denial_reason": "medical_necessity",
+      "total_billed_denied": 7963.07
+    },
+    {
+      "provider_id": "PROV-000011",
+      "total_denials": 1,
+      "total_appeals": 1,
+      "appeal_rate": 1.0,
+      "top_denial_reason": "authorization_missing",
+      "total_billed_denied": 270.33
+    },
+    {
+      "provider_id": "PROV-000015",
+      "total_denials": 6,
+      "total_appeals": 1,
+      "appeal_rate": 0.1667,
+      "top_denial_reason": "untimely_filing",
+      "total_billed_denied": 2763.78
+    },
+    {
+      "provider_id": "PROV-000009",
+      "total_denials": 4,
+      "total_appeals": 1,
+      "appeal_rate": 0.25,
+      "top_denial_reason": "untimely_filing",
+      "total_billed_denied": 175461.88
+    },
+    {
+      "provider_id": "PROV-000002",
+      "total_denials": 2,
+      "total_appeals": 1,
+      "appeal_rate": 0.5,
+      "top_denial_reason": "authorization_missing",
+      "total_billed_denied": 286.62
+    },
+    {
+      "provider_id": "PROV-000008",
+      "total_denials": 2,
+      "total_appeals": 1,
+      "appeal_rate": 0.5,
+      "top_denial_reason": "untimely_filing",
+      "total_billed_denied": 1083.57
+    },
+    {
+      "provider_id": "PROV-000012",
+      "total_denials": 2,
+      "total_appeals": 1,
+      "appeal_rate": 0.5,
+      "top_denial_reason": "not_covered",
+      "total_billed_denied": 1459.73
+    },
+    {
+      "provider_id": "PROV-000014",
+      "total_denials": 3,
+      "total_appeals": 1,
+      "appeal_rate": 0.3333,
+      "top_denial_reason": "medical_necessity",
+      "total_billed_denied": 910.36
+    },
+    {
+      "provider_id": "PROV-000018",
+      "total_denials": 2,
+      "total_appeals": 1,
+      "appeal_rate": 0.5,
+      "top_denial_reason": "not_covered",
+      "total_billed_denied": 856.78
+    }
+  ]
+}
