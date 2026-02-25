@@ -222,6 +222,28 @@ def ingest_kaggle(
 
 
 @app.command()
+def policy_seeds(
+    input_file: Path = typer.Option(..., "--input", help="Path to claims parquet file"),
+    output_dir: Path = typer.Option(Path("output"), "--output-dir", help="Output directory"),
+    min_claims: int = typer.Option(30, "--min-claims", help="Minimum claims per cluster"),
+) -> None:
+    """Build policy seed clusters from claims data (CPT-context groupings)."""
+    from um_claims.ingest import load_claims
+    from um_claims.policy_seeds import build_policy_seeds, write_policy_seeds
+
+    console.print(f"[bold blue]Building policy seeds from {input_file}...[/]")
+
+    df = load_claims(input_file)
+    seeds = build_policy_seeds(df, min_claims=min_claims)
+    parquet_path, jsonl_path = write_policy_seeds(seeds, output_dir)
+
+    console.print(
+        f"[green]✓ Built {len(seeds):,} policy seed clusters "
+        f"(min_claims={min_claims}) → {parquet_path}, {jsonl_path}[/]"
+    )
+
+
+@app.command()
 def run_all(
     seed: int = typer.Option(42, help="Random seed for reproducible generation"),
     num_claims: int = typer.Option(100_000, help="Number of claims to generate"),
