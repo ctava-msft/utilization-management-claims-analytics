@@ -290,6 +290,70 @@ def parse_policies(
 
 
 @app.command()
+def policy_insights(
+    claims: Path = typer.Option(..., "--claims", help="Path to claims parquet file"),
+    policies: Path = typer.Option(..., "--policies", help="Path to policies JSONL file"),
+    output_dir: Path = typer.Option(Path("output"), "--output-dir", help="Output directory"),
+    rank_by: str = typer.Option(
+        "total_amount",
+        "--rank-by",
+        help="Sort policy table by this key (total_amount or denial_rate)",
+    ),
+) -> None:
+    """Match claims to policies, compute per-policy KPIs, and generate a report."""
+    from um_claims.analytics.policy_kpis import compute_policy_kpis
+    from um_claims.ingest import load_claims
+    from um_claims.policy.match_claims import match_claims_to_policies
+
+    console.print("[bold blue]Matching claims → policies...[/]")
+
+    # Load claims
+    claims_df = load_claims(claims)
+    claim_rows = claims_df.to_dicts()
+
+    # Load policies
+    policies_path = Path(policies)
+    if not policies_path.exists():
+        console.print(f"[red]Policies file not found: {policies_path}[/]")
+        raise typer.Exit(code=1)
+    policy_rules: list[dict] = []
+    for line in policies_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            policy_rules.append(json.loads(line))
+
+    # Match
+    matched = match_claims_to_policies(claim_rows, policy_rules)
+    matched_count = sum(1 for m in matched if m["policy_id"] != "unmatched")
+    console.print(
+        f"  Matched {matched_count:,} / {len(matched):,} claims to a policy"
+    )
+
+    # KPIs
+    kpis = compute_policy_kpis(matched)
+
+    # Save KPIs
+    output_dir.mkdir(parents=True, exist_ok=True)
+    kpi_path = output_dir / "policy_kpis.json"
+    kpi_path.write_text(json.dumps(kpis, indent=2), encoding="utf-8")
+    console.print(f"  [green]✓ KPIs written → {kpi_path}[/]")
+
+    # Generate a lightweight Markdown report with the Policy Insights table
+    from um_claims.reporting import _render_policy_insights
+
+    report_lines: list[str] = []
+    report_lines.append("# Policy Insights Report\n")
+    report_lines.append(f"**Claims:** {len(matched):,} | **Policies:** {len(policy_rules)}\n")
+    report_lines.append(f"**Matched:** {matched_count:,} | **Unmatched:** {len(matched) - matched_count:,}\n")
+    report_lines.append("---\n")
+    report_lines.extend(_render_policy_insights(kpis, rank_by=rank_by))
+
+    report_path = output_dir / "report.md"
+    report_path.write_text("\n".join(report_lines), encoding="utf-8")
+    console.print(f"  [green]✓ Report → {report_path}[/]")
+
+
+@app.command()
 def run_all(
     seed: int = typer.Option(42, help="Random seed for reproducible generation"),
     num_claims: int = typer.Option(100_000, help="Number of claims to generate"),
