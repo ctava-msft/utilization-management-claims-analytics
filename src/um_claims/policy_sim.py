@@ -8,12 +8,15 @@ Spec: SR-5
 
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 
 from pydantic import BaseModel, Field
 import polars as pl
 
 from um_claims.config import DetectionConfig, PolicyChangeEvent
+
+logger = logging.getLogger(__name__)
 
 
 class PolicyMetrics(BaseModel):
@@ -93,6 +96,15 @@ def analyze_policy_impact(
             affected_mask = affected_mask | pl.col("procedure_code").str.starts_with(prefix)
 
         affected_claims = df.filter(affected_mask)
+
+        logger.debug(
+            "Policy %s: prefixes=%s, matched %d/%d claims, unique CPTs=%d",
+            event.policy_id,
+            event.affected_procedure_prefixes,
+            affected_claims.height,
+            df.height,
+            affected_claims["procedure_code"].n_unique() if affected_claims.height > 0 else 0,
+        )
 
         if affected_claims.height == 0:
             impacts.append(

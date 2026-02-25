@@ -12,11 +12,14 @@ Spec: SR-3
 
 from __future__ import annotations
 
+import logging
 from datetime import date
 
 import polars as pl
 
 from um_claims.config import get_service_category
+
+logger = logging.getLogger(__name__)
 
 
 def tag_service_categories(df: pl.DataFrame) -> pl.DataFrame:
@@ -171,6 +174,16 @@ def compute_all_features(
         and the enriched 'claims' DataFrame with service_category tagged.
     """
     enriched = tag_service_categories(df)
+
+    input_cpts = df["procedure_code"].n_unique()
+    enriched_cpts = enriched["procedure_code"].n_unique()
+    logger.debug(
+        "CPT propagation: input=%d unique CPTs, enriched=%d unique CPTs, "
+        "null_count=%d, rows_in=%d, rows_out=%d",
+        input_cpts, enriched_cpts,
+        enriched["procedure_code"].null_count(),
+        df.height, enriched.height,
+    )
 
     return {
         "claims": enriched,

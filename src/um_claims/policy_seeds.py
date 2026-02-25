@@ -13,10 +13,13 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 from collections import Counter
 from pathlib import Path  # noqa: TC003
 
 import polars as pl
+
+logger = logging.getLogger(__name__)
 
 
 def _compute_top_dx_codes(codes_json_list: pl.Series | list[str | None], top_n: int = 5) -> str:
@@ -96,6 +99,14 @@ def build_policy_seeds(
         )
         .drop("_dx_codes_raw")
     )
+
+    input_cpts = df["procedure_code"].n_unique()
+    seed_cpts = seeds["procedure_code"].n_unique()
+    logger.debug(
+        "Policy seeds: %d input CPTs → %d seed CPTs, %d clusters (min_claims=%d)",
+        input_cpts, seed_cpts, seeds.height, min_claims,
+    )
+
     return seeds
 
 
