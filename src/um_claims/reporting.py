@@ -113,6 +113,52 @@ def _save_denial_funnel(appeals_report: AppealsReport, output_dir: Path) -> str:
     return "figures/denial_funnel.png"
 
 
+def _render_policy_insights(policy_kpis: list[dict], rank_by: str = "total_amount") -> list[str]:
+    """Render a Policy Insights Markdown section from KPI dicts.
+
+    Args:
+        policy_kpis: List of per-policy KPI dicts as produced by
+            :func:`um_claims.analytics.policy_kpis.compute_policy_kpis`.
+        rank_by: Key to sort the table by (``"total_amount"`` or
+            ``"denial_rate"``).  Defaults to ``"total_amount"``.
+
+    Returns:
+        List of Markdown lines (without trailing newline on each).
+    """
+    lines: list[str] = []
+    lines.append("## Policy Insights\n")
+
+    if not policy_kpis:
+        lines.append("No policy KPI data available.\n")
+        return lines
+
+    # Sort by chosen key (descending)
+    sorted_kpis = sorted(
+        policy_kpis,
+        key=lambda k: k.get(rank_by, 0),
+        reverse=True,
+    )
+
+    lines.append(f"Ranked by **{rank_by}** (descending).\n")
+    lines.append(
+        "| # | Policy ID | Claims | Total Amount | Avg Amount "
+        "| Approval Rate | Denial Rate | Top Dx | Top Specialties |"
+    )
+    lines.append("|---|---|---|---|---|---|---|---|---|")
+
+    for i, kpi in enumerate(sorted_kpis, 1):
+        top_dx = ", ".join(kpi.get("top_dx", [])[:3]) or "—"
+        top_spec = ", ".join(kpi.get("top_specialties", [])[:3]) or "—"
+        lines.append(
+            f"| {i} | {kpi['policy_id']} | {kpi['n_claims']:,} "
+            f"| ${kpi['total_amount']:,.2f} | ${kpi['avg_amount']:,.2f} "
+            f"| {kpi['approval_rate']:.2%} | {kpi['denial_rate']:.2%} "
+            f"| {top_dx} | {top_spec} |"
+        )
+    lines.append("")
+    return lines
+
+
 def generate_report(
     config: PipelineConfig,
     df: pl.DataFrame,
@@ -122,6 +168,8 @@ def generate_report(
     benchmark_report: BenchmarkReport,
     temporal_features: pl.DataFrame,
     output_dir: Path,
+    policy_kpis: list[dict] | None = None,
+    rank_by: str = "total_amount",
 ) -> Path:
     """Generate the full Markdown report with visualizations.
 
@@ -134,6 +182,10 @@ def generate_report(
         benchmark_report: Benchmark comparisons.
         temporal_features: Temporal feature DataFrame.
         output_dir: Output directory.
+        policy_kpis: Optional per-policy KPI dicts (from
+            :func:`um_claims.analytics.policy_kpis.compute_policy_kpis`).
+        rank_by: Sort key for the Policy Insights table
+            (``"total_amount"`` or ``"denial_rate"``).
 
     Returns:
         Path to the generated report file.
@@ -271,6 +323,10 @@ def generate_report(
         lines.append(f"\n**Flagged metrics:** {benchmark_report.flagged_count}\n")
     else:
         lines.append("No benchmarks configured.\n")
+
+    # --- Policy Insights ---
+    if policy_kpis is not None:
+        lines.extend(_render_policy_insights(policy_kpis, rank_by=rank_by))
 
     # --- Recommended Next Questions ---
     lines.append("## Recommended Next Questions\n")
