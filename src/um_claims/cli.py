@@ -244,6 +244,31 @@ def policy_seeds(
 
 
 @app.command()
+def generate_policies(
+    seeds: Path = typer.Option(
+        Path("output/policy_seeds.parquet"),
+        "--seeds",
+        help="Path to policy_seeds parquet file",
+    ),
+    output_dir: Path = typer.Option(
+        Path("output/policies"),
+        "--output-dir",
+        help="Directory to write Markdown policy files",
+    ),
+) -> None:
+    """Generate synthetic PA policy Markdown files from policy seed clusters."""
+    from um_claims.ingest import load_claims
+    from um_claims.policy.generate_policy_md import write_policies
+
+    console.print(f"[bold blue]Generating policies from {seeds}...[/]")
+
+    seeds_df = load_claims(seeds)
+    written = write_policies(seeds_df, out_dir=output_dir)
+
+    console.print(f"[green]✓ Wrote {len(written)} policy file(s) → {output_dir}[/]")
+
+
+@app.command()
 def run_all(
     seed: int = typer.Option(42, help="Random seed for reproducible generation"),
     num_claims: int = typer.Option(100_000, help="Number of claims to generate"),
