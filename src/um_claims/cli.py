@@ -269,6 +269,27 @@ def generate_policies(
 
 
 @app.command()
+def parse_policies(
+    policy_dir: Path = typer.Option(
+        Path("output/policies"),
+        "--policy-dir",
+        help="Directory containing Markdown policy files",
+    ),
+    output: Path = typer.Option(
+        Path("output/policies.jsonl"),
+        "--output",
+        help="Output JSONL path for parsed policy rules",
+    ),
+) -> None:
+    """Parse Markdown policy files into structured JSON rules (JSONL)."""
+    from um_claims.policy.parse_policy_md import parse_policies_dir
+
+    console.print(f"[bold blue]Parsing policies from {policy_dir}...[/]")
+    out_path = parse_policies_dir(policy_dir, output=output)
+    console.print(f"[green]✓ Parsed policies → {out_path}[/]")
+
+
+@app.command()
 def run_all(
     seed: int = typer.Option(42, help="Random seed for reproducible generation"),
     num_claims: int = typer.Option(100_000, help="Number of claims to generate"),
