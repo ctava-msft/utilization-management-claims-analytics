@@ -204,6 +204,24 @@ def report(
 
 
 @app.command()
+def ingest_kaggle(
+    input_file: Path = typer.Option(..., "--input", help="Path to Kaggle CSV file"),
+    output_dir: Path = typer.Option(Path("output"), help="Output directory"),
+) -> None:
+    """Ingest a Kaggle Enhanced Health Insurance Claims CSV into canonical format."""
+    from um_claims.ingest import save_claims
+    from um_claims.io.kaggle_loader import load_kaggle_claims
+
+    console.print(f"[bold blue]Ingesting Kaggle CSV: {input_file}...[/]")
+
+    df = load_kaggle_claims(input_file)
+    out_path = output_dir / "raw_claims.parquet"
+    save_claims(df, out_path)
+
+    console.print(f"[green]✓ Ingested {len(df):,} claims → {out_path}[/]")
+
+
+@app.command()
 def run_all(
     seed: int = typer.Option(42, help="Random seed for reproducible generation"),
     num_claims: int = typer.Option(100_000, help="Number of claims to generate"),
