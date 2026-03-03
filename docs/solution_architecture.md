@@ -16,16 +16,30 @@ The POC approach is to derive insights with minimal infrastructure. A **solution
 ```mermaid
 ---
 config:
-  theme: default
+  theme: base
   themeVariables:
     fontSize: 24px
     background: "#FFFFFF"
+    primaryColor: "#FFFFFF"
+    primaryTextColor: "#000000"
+    primaryBorderColor: "#000000"
+    secondaryColor: "#FFFFFF"
+    secondaryTextColor: "#000000"
+    secondaryBorderColor: "#000000"
+    tertiaryColor: "#FFFFFF"
+    tertiaryTextColor: "#000000"
+    tertiaryBorderColor: "#000000"
+    lineColor: "#000000"
+    textColor: "#000000"
     mainBkg: "#FFFFFF"
-    nodeBorder: "#333333"
-    clusterBkg: "#F5F5F5"
-    clusterBorder: "#CCCCCC"
-    titleColor: "#333333"
+    nodeBorder: "#000000"
+    clusterBkg: "#FFFFFF"
+    clusterBorder: "#000000"
+    titleColor: "#000000"
     edgeLabelBackground: "#FFFFFF"
+    noteTextColor: "#000000"
+    noteBkgColor: "#FFFFFF"
+    noteBorderColor: "#000000"
 ---
 graph LR
 
@@ -118,38 +132,22 @@ graph LR
     VM --> OUTPUT
 
     %% Styling
-    classDef azureBlue fill:#0078D4,stroke:#005A9E,color:#fff,stroke-width:2px
-    classDef fabricPurple fill:#6C2D82,stroke:#4B1D5E,color:#fff,stroke-width:2px
-    classDef snowflakeBlue fill:#29B5E8,stroke:#1D8AB5,color:#fff,stroke-width:2px
-    classDef greenOut fill:#107C10,stroke:#0B5E0B,color:#fff,stroke-width:2px
-    classDef sourceGray fill:#605E5C,stroke:#3B3A39,color:#fff,stroke-width:2px
-    classDef bastionOrange fill:#E3751C,stroke:#B55D16,color:#fff,stroke-width:2px
+    classDef default fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px
+    classDef optionalDashed fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px,stroke-dasharray:5 5
 
-    classDef optionalDashed fill:#0078D4,stroke:#005A9E,color:#fff,stroke-width:2px,stroke-dasharray:5 5
-
-    classDef adfGreen fill:#008272,stroke:#005E5A,color:#fff,stroke-width:2px
-    classDef llmTeal fill:#005B70,stroke:#004455,color:#fff,stroke-width:2px
-
-    class VM,STORAGE,POLICY_JSON,ADLS azureBlue
+    class VM,STORAGE,POLICY_JSON,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,CLI_REPORTS,CLI_FLAGS,UPMC_POLICIES,BASTION,ADF,GPT,FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ default
     class FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ optionalDashed
-    class ONELAKE,FABRIC_LAKEHOUSE fabricPurple
-    class SNOWFLAKE snowflakeBlue
-    class CLI_REPORTS,CLI_FLAGS greenOut
-    class UPMC_POLICIES sourceGray
-    class BASTION bastionOrange
-    class ADF adfGreen
-    class GPT llmTeal
 
     %% Subgraph backgrounds
-    style POLICY_SOURCE fill:#F0F6FF,stroke:#B3D1FF,color:#333
-    style POLICY_INGESTION fill:#F0F6FF,stroke:#B3D1FF,color:#333
-    style POLICY_RAG fill:#F0F6FF,stroke:#B3D1FF,stroke-dasharray:5 5,color:#333
-    style CLAIMS_SOURCE fill:#E8F8FD,stroke:#A3DEF0,color:#333
-    style CLAIMS_MOVEMENT fill:#E8F8FD,stroke:#A3DEF0,color:#333
-    style CLAIMS_FABRIC fill:#F3EBF7,stroke:#C9A8D8,color:#333
-    style LLM_SERVICE fill:#E6F2F5,stroke:#99CCD9,color:#333
-    style ACCESS fill:#FFF3E6,stroke:#FFD1A3,color:#333
-    style OUTPUT fill:#E8F5E8,stroke:#A8D5A8,color:#333
+    style POLICY_SOURCE fill:#FFFFFF,stroke:#000000,color:#000000
+    style POLICY_INGESTION fill:#FFFFFF,stroke:#000000,color:#000000
+    style POLICY_RAG fill:#FFFFFF,stroke:#000000,stroke-dasharray:5 5,color:#000000
+    style CLAIMS_SOURCE fill:#FFFFFF,stroke:#000000,color:#000000
+    style CLAIMS_MOVEMENT fill:#FFFFFF,stroke:#000000,color:#000000
+    style CLAIMS_FABRIC fill:#FFFFFF,stroke:#000000,color:#000000
+    style LLM_SERVICE fill:#FFFFFF,stroke:#000000,color:#000000
+    style ACCESS fill:#FFFFFF,stroke:#000000,color:#000000
+    style OUTPUT fill:#FFFFFF,stroke:#000000,color:#000000
 ```
 
 ### POC Characteristics
@@ -177,16 +175,30 @@ Production upgrades the POC by replacing the manual Copilot-assisted workflow wi
 ```mermaid
 ---
 config:
-  theme: default
+  theme: base
   themeVariables:
     fontSize: 24px
     background: "#FFFFFF"
+    primaryColor: "#FFFFFF"
+    primaryTextColor: "#000000"
+    primaryBorderColor: "#000000"
+    secondaryColor: "#FFFFFF"
+    secondaryTextColor: "#000000"
+    secondaryBorderColor: "#000000"
+    tertiaryColor: "#FFFFFF"
+    tertiaryTextColor: "#000000"
+    tertiaryBorderColor: "#000000"
+    lineColor: "#000000"
+    textColor: "#000000"
     mainBkg: "#FFFFFF"
-    nodeBorder: "#333333"
-    clusterBkg: "#F5F5F5"
-    clusterBorder: "#CCCCCC"
-    titleColor: "#333333"
+    nodeBorder: "#000000"
+    clusterBkg: "#FFFFFF"
+    clusterBorder: "#000000"
+    titleColor: "#000000"
     edgeLabelBackground: "#FFFFFF"
+    noteTextColor: "#000000"
+    noteBkgColor: "#FFFFFF"
+    noteBorderColor: "#000000"
 ---
 graph LR
 
@@ -300,43 +312,24 @@ graph LR
     FABRIC_LAKEHOUSE -->|"DirectLake"| POWERBI
 
     %% Styling
-    classDef azureBlue fill:#0078D4,stroke:#005A9E,color:#fff,stroke-width:2px
-    classDef fabricPurple fill:#6C2D82,stroke:#4B1D5E,color:#fff,stroke-width:2px
-    classDef snowflakeBlue fill:#29B5E8,stroke:#1D8AB5,color:#fff,stroke-width:2px
-    classDef greenOut fill:#107C10,stroke:#0B5E0B,color:#fff,stroke-width:2px
-    classDef sourceGray fill:#605E5C,stroke:#3B3A39,color:#fff,stroke-width:2px
-    classDef bastionOrange fill:#E3751C,stroke:#B55D16,color:#fff,stroke-width:2px
-    classDef f5Red fill:#C4262E,stroke:#9B1D23,color:#fff,stroke-width:2px
-    classDef networkGray fill:#D2D0CE,stroke:#A19F9D,color:#323130,stroke-width:2px
+    classDef default fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px
+    classDef optionalDashed fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px,stroke-dasharray:5 5
 
-    classDef optionalDashed fill:#0078D4,stroke:#005A9E,color:#fff,stroke-width:2px,stroke-dasharray:5 5
-
-    classDef adfGreen fill:#008272,stroke:#005E5A,color:#fff,stroke-width:2px
-    classDef llmTeal fill:#005B70,stroke:#004455,color:#fff,stroke-width:2px
-
-    class AKS,ORCHESTRATOR,UM_AGENTS,STORAGE,POLICY_JSON,VM,ADLS azureBlue
+    class AKS,ORCHESTRATOR,UM_AGENTS,STORAGE,POLICY_JSON,VM,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,POWERBI,FLAGS,RECOMMENDATIONS,UPMC_POLICIES,ALT_POLICIES,BASTION,F5,ADF,GPT default
     class FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ optionalDashed
-    class ONELAKE,FABRIC_LAKEHOUSE fabricPurple
-    class SNOWFLAKE snowflakeBlue
-    class POWERBI,FLAGS,RECOMMENDATIONS greenOut
-    class UPMC_POLICIES,ALT_POLICIES sourceGray
-    class BASTION bastionOrange
-    class F5 f5Red
-    class ADF adfGreen
-    class GPT llmTeal
 
     %% Subgraph backgrounds
-    style POLICY_SOURCE fill:#F0F6FF,stroke:#B3D1FF,color:#333
-    style POLICY_INGESTION fill:#F0F6FF,stroke:#B3D1FF,color:#333
-    style POLICY_RAG fill:#F0F6FF,stroke:#B3D1FF,stroke-dasharray:5 5,color:#333
-    style CLAIMS_SOURCE fill:#E8F8FD,stroke:#A3DEF0,color:#333
-    style CLAIMS_MOVEMENT fill:#E8F8FD,stroke:#A3DEF0,color:#333
-    style CLAIMS_FABRIC fill:#F3EBF7,stroke:#C9A8D8,color:#333
-    style LLM_SERVICE fill:#E6F2F5,stroke:#99CCD9,color:#333
-    style ADMIN_ACCESS fill:#FFF3E6,stroke:#FFD1A3,color:#333
-    style NETWORK fill:#FFF8F0,stroke:#E0C8A8,color:#333
-    style CONTROL_PLANE fill:#F0F6FF,stroke:#B3D1FF,color:#333
-    style OUTPUT fill:#E8F5E8,stroke:#A8D5A8,color:#333
+    style POLICY_SOURCE fill:#FFFFFF,stroke:#000000,color:#000000
+    style POLICY_INGESTION fill:#FFFFFF,stroke:#000000,color:#000000
+    style POLICY_RAG fill:#FFFFFF,stroke:#000000,stroke-dasharray:5 5,color:#000000
+    style CLAIMS_SOURCE fill:#FFFFFF,stroke:#000000,color:#000000
+    style CLAIMS_MOVEMENT fill:#FFFFFF,stroke:#000000,color:#000000
+    style CLAIMS_FABRIC fill:#FFFFFF,stroke:#000000,color:#000000
+    style LLM_SERVICE fill:#FFFFFF,stroke:#000000,color:#000000
+    style ADMIN_ACCESS fill:#FFFFFF,stroke:#000000,color:#000000
+    style NETWORK fill:#FFFFFF,stroke:#000000,color:#000000
+    style CONTROL_PLANE fill:#FFFFFF,stroke:#000000,color:#000000
+    style OUTPUT fill:#FFFFFF,stroke:#000000,color:#000000
 ```
 
 ### Production Characteristics
