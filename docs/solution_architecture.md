@@ -7,7 +7,7 @@
 
 ## Approach A — POC
 
-The POC approach is to derive insights with minimal infrastructure. A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on a **VM** (accessed through Azure Bastion). The Copilot-assisted workflow joins **de-identified** claims data with policy CPT codes from the Fabric Lakehouse, then calls an **Azure OpenAI language model (e.g. GPT-5.2-chat)** to summarize and analyze the CPT-code linkages — identifying anomalies, generating plain-language explanations, and producing flag recommendations. Output is consumed as **Markdown reports and JSON files**. No AKS or Power BI is required at this stage.
+The POC approach is to derive insights with minimal infrastructure. A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on a **VM** (accessed through Azure Bastion). The Copilot-assisted workflow joins **de-identified** claims data with policy CPT codes from the Fabric Lakehouse, then calls a **language model hosted in Azure AI Foundry (e.g. GPT-5.2-chat)** to summarize and analyze the CPT-code linkages — identifying anomalies, generating plain-language explanations, and producing flag recommendations. Output is consumed as **Markdown reports and JSON files**. No AKS or Power BI is required at this stage.
 
 > **No PHI.** All claims data extracted from Snowflake is **de-identified before leaving Snowflake**. No Protected Health Information (PHI) is present in the Fabric Lakehouse, the VM, the LLM prompts, or any analytics output. This was agreed with the customer as a non-negotiable boundary.
 
@@ -29,14 +29,13 @@ config:
     tertiaryColor: "#FFFFFF"
     tertiaryTextColor: "#000000"
     tertiaryBorderColor: "#000000"
-    lineColor: "#000000"
+    lineColor: "#FFFFFF"
     textColor: "#000000"
     mainBkg: "#FFFFFF"
     nodeBorder: "#000000"
     clusterBkg: "#FFFFFF"
     clusterBorder: "#000000"
     titleColor: "#000000"
-    edgeLabelBackground: "#FFFFFF"
     noteTextColor: "#000000"
     noteBkgColor: "#FFFFFF"
     noteBorderColor: "#000000"
@@ -88,9 +87,9 @@ graph LR
     end
 
     %% ───────────────────────────────────────────
-    %% LLM — Azure OpenAI
+    %% LLM — Azure AI Foundry
     %% ───────────────────────────────────────────
-    subgraph LLM_SERVICE["Azure OpenAI Service"]
+    subgraph LLM_SERVICE["Azure AI Foundry"]
         direction TB
         GPT["🧠 GPT-5.2-chat<br/><i>temperature=0 · seed pinned<br/>Summarise CPT-code joins<br/>Anomaly explanations</i>"]
     end
@@ -155,10 +154,10 @@ graph LR
 | Aspect | Detail |
 |---|---|
 | **Compute** | Single Azure VM accessed via **Azure Bastion** (no public IP on the VM). |
-| **Identity** | **User Managed Identity** assigned to the VM; used for authenticating to Storage, Foundry, Fabric, and Azure OpenAI endpoints. |
-| **Pipeline execution** | A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on the VM to run the `um-claims run-all` pipeline. The script reads **de-identified** claims and structured policy data from the Fabric Lakehouse, joins them on CPT codes, and sends the join results to **Azure OpenAI (GPT-5.2-chat)** for summarisation — producing anomaly explanations, plain-language findings, and flag recommendations. Results are **written back to the Fabric Lakehouse** (UM insights, flags, and alerts tables) so they can be reported on, in addition to local Markdown/JSON output files. |
-| **LLM role** | **GPT-5.2-chat** (Azure OpenAI) is called by the Python script to summarise and interpret CPT-code linkages between de-identified claims and policy data. The model generates human-readable explanations that the solution architect reviews. **No PHI is sent to the LLM.** |
-| **LLM determinism** | All Azure OpenAI calls enforce **`temperature=0`** and a **fixed `seed`** parameter so that LLM summaries do not vary across runs. This aligns with the project's determinism and reproducibility requirement. |
+| **Identity** | **User Managed Identity** assigned to the VM; used for authenticating to Storage, Foundry, Fabric, and Foundry LLM endpoints. |
+| **Pipeline execution** | A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on the VM to run the `um-claims run-all` pipeline. The script reads **de-identified** claims and structured policy data from the Fabric Lakehouse, joins them on CPT codes, and sends the join results to **Azure AI Foundry (GPT-5.2-chat)** for summarisation — producing anomaly explanations, plain-language findings, and flag recommendations. Results are **written back to the Fabric Lakehouse** (UM insights, flags, and alerts tables) so they can be reported on, in addition to local Markdown/JSON output files. |
+| **LLM role** | **GPT-5.2-chat** (Azure AI Foundry) is called by the Python script to summarise and interpret CPT-code linkages between de-identified claims and policy data. The model generates human-readable explanations that the solution architect reviews. **No PHI is sent to the LLM.** |
+| **LLM determinism** | All Foundry LLM calls enforce **`temperature=0`** and a **fixed `seed`** parameter so that LLM summaries do not vary across runs. This aligns with the project's determinism and reproducibility requirement. |
 | **Data privacy** | All claims data is **de-identified in Snowflake before extraction**. No PHI is present in the Lakehouse, on the VM, in LLM prompts, or in any output artefact. |
 | **Networking** | VM sits in a VNet; Bastion provides secure RDP/SSH without exposing the VM to the internet. |
 
@@ -188,14 +187,13 @@ config:
     tertiaryColor: "#FFFFFF"
     tertiaryTextColor: "#000000"
     tertiaryBorderColor: "#000000"
-    lineColor: "#000000"
+    lineColor: "#FFFFFF"
     textColor: "#000000"
     mainBkg: "#FFFFFF"
     nodeBorder: "#000000"
     clusterBkg: "#FFFFFF"
     clusterBorder: "#000000"
     titleColor: "#000000"
-    edgeLabelBackground: "#FFFFFF"
     noteTextColor: "#000000"
     noteBkgColor: "#FFFFFF"
     noteBorderColor: "#000000"
@@ -248,9 +246,9 @@ graph LR
     end
 
     %% ───────────────────────────────────────────
-    %% LLM — Azure OpenAI
+    %% LLM — Azure AI Foundry
     %% ───────────────────────────────────────────
-    subgraph LLM_SERVICE["Azure OpenAI Service"]
+    subgraph LLM_SERVICE["Azure AI Foundry"]
         direction TB
         GPT["🧠 GPT-5.2-chat<br/><i>temperature=0 · seed pinned<br/>Summarise CPT-code joins<br/>Anomaly explanations</i>"]
     end
@@ -338,9 +336,9 @@ graph LR
 |---|---|
 | **Compute** | **AKS private cluster** running the [Azure Agents Control Plane](https://github.com/microsoft/azure-agents-control-plane/). VM/Bastion retained for admin access. |
 | **Agent runtime** | **Python FastAPI application** deployed as pods on AKS. The FastAPI agents automate the same CPT-code join analysis and **GPT-5.2-chat summarisation** that the solution architect performs manually in the POC — running continuously, at scale, and exposed via REST API. All input data is de-identified; **no PHI enters the agents or the LLM**. Results (UM insights, flags, alerts) are **written back to the Fabric Lakehouse** for Power BI reporting. |
-| **LLM determinism** | All Azure OpenAI calls enforce **`temperature=0`** and a **fixed `seed`** parameter. Summaries are reproducible across runs given the same input data. |
+| **LLM determinism** | All Foundry LLM calls enforce **`temperature=0`** and a **fixed `seed`** parameter. Summaries are reproducible across runs given the same input data. |
 | **Load Balancing** | **F5** sits in front of AKS providing TLS termination and traffic management. |
-| **Identity** | **User Managed Identity** on both AKS and the VM; used for all Azure service authentication (Storage, Foundry, Fabric, Key Vault, Azure OpenAI). No service-principal secrets stored. |
+| **Identity** | **User Managed Identity** on both AKS and the VM; used for all Azure service authentication (Storage, Foundry, Fabric, Key Vault). No service-principal secrets stored. |
 | **Private Networking** | All services communicate over **Private Endpoints / Private Link** within a hub-spoke VNet topology. AKS API server is private. No public ingress except through F5. |
 | **Outputs** | **Power BI dashboards** replace local reports; flags and recommendations are surfaced via API and Power BI. |
 
@@ -385,7 +383,7 @@ The **Fabric Lakehouse** is the primary query surface. The VM (POC) or AKS agent
 
 Claims data resides in **Snowflake**, the existing enterprise data warehouse.
 
-> **⚠️ No PHI — Customer-Agreed Boundary.** All claims data extracted from Snowflake is **de-identified before it leaves Snowflake**. The Snowflake team is responsible for applying de-identification (removal or hashing of all HIPAA-defined identifiers) at the extraction boundary. No Protected Health Information (PHI) is present in OneLake, ADLS Gen2, the Fabric Lakehouse, compute layers (VM / AKS), Azure OpenAI prompts, or any analytics output. This constraint was agreed with the customer and applies to both POC and Production.
+> **⚠️ No PHI — Customer-Agreed Boundary.** All claims data extracted from Snowflake is **de-identified before it leaves Snowflake**. The Snowflake team is responsible for applying de-identification (removal or hashing of all HIPAA-defined identifiers) at the extraction boundary. No Protected Health Information (PHI) is present in OneLake, ADLS Gen2, the Fabric Lakehouse, compute layers (VM / AKS), Foundry LLM prompts, or any analytics output. This constraint was agreed with the customer and applies to both POC and Production.
 
 ### Data Movement Options
 
@@ -471,8 +469,8 @@ The **Azure Agents Control Plane** runs on a **private AKS cluster** and orchest
 | Capability | Description |
 |---|---|
 | **Agent Orchestrator** | Routes requests to the appropriate agent(s), manages multi-turn state, and handles tool-calling dispatch. |
-| **UM Analytics Agents (FastAPI)** | Python FastAPI services for detection, policy simulation, appeals analysis, and benchmarking. Each agent reads **de-identified** claims + policy data from the Fabric Lakehouse, joins on CPT codes, and calls **Azure OpenAI (GPT-5.2-chat)** to summarise results — automating the work the solution architect does by hand in the POC. **No PHI enters the agents or the LLM.** |
-| **LLM Integration** | Calls **Azure OpenAI GPT-5.2-chat** with **`temperature=0`** and a **fixed `seed`** to generate deterministic, plain-language summaries of CPT-code join results, anomaly explanations, and flag recommendations. All input to the LLM is de-identified. |
+| **UM Analytics Agents (FastAPI)** | Python FastAPI services for detection, policy simulation, appeals analysis, and benchmarking. Each agent reads **de-identified** claims + policy data from the Fabric Lakehouse, joins on CPT codes, and calls **Azure AI Foundry (GPT-5.2-chat)** to summarise results — automating the work the solution architect does by hand in the POC. **No PHI enters the agents or the LLM.** |
+| **LLM Integration** | Calls **Azure AI Foundry GPT-5.2-chat** with **`temperature=0`** and a **fixed `seed`** to generate deterministic, plain-language summaries of CPT-code join results, anomaly explanations, and flag recommendations. All input to the LLM is de-identified. |
 | **Tool Integration** | Queries the Fabric Lakehouse for combined de-identified claims + policy data over Private Link. Optionally calls FoundryIQ for policy RAG. |
 | **Scalability** | AKS provides horizontal pod autoscaling for burst workloads and node-level scaling for compute-intensive tasks. |
 | **Identity** | AKS pods use **User Managed Identity** (via workload identity federation) — no secrets in cluster. |
@@ -495,7 +493,6 @@ All production traffic stays on the Microsoft backbone or traverses customer-man
 |---|---|
 | Azure Storage Account | Private Endpoint in VNet |
 | Azure AI Foundry | Private Endpoint / VNet integration |
-| Azure OpenAI Service | Private Endpoint |
 | FoundryIQ | Private Endpoint |
 | AKS API Server | Private cluster (no public FQDN) |
 | Fabric / OneLake | Managed Private Endpoint / Private Link |
@@ -553,16 +550,15 @@ All resources required to stand up the proof-of-concept environment:
 | 4 | **Azure VM** | Standard_D4s_v5 (or similar) | Solution architect workstation — VSCode + GitHub Copilot (Claude Opus 4.6, fast mode) for running `um-claims` pipeline |
 | 5 | **User Managed Identity** | — | Identity for VM; authenticates to all downstream services |
 | 6 | **Azure Storage Account** | Standard LRS | Raw policy document storage |
-| 7 | **Azure AI Foundry** (Project) *(optional)* | — | Hosts the `text-embedding-3` model for policy vectorization (only if policy RAG is enabled) |
+| 7 | **Azure AI Foundry** (Project) | — | Hosts **GPT-5.2-chat** (`temperature=0`, fixed `seed`) for LLM summarisation, and optionally the `text-embedding-3` model for policy vectorization (if policy RAG is enabled). Single Foundry project for all model deployments. |
 | 8 | **FoundryIQ** *(optional)* | — | Knowledge index and grounding store over policy embeddings (only if policy RAG is enabled) |
-| 9 | **Azure OpenAI Service** | GPT-5.2-chat deployment (`temperature=0`, fixed `seed`) | LLM used by the pipeline to summarise CPT-code joins and generate anomaly explanations. Deterministic parameters enforced for reproducibility. |
-| 10 | **Microsoft Fabric Capacity** | F2 or higher | Hosts Lakehouse (de-identified claims + policy JSON), OneLake / ADLS Gen2 shortcuts |
-| 11 | **Azure Key Vault** | Standard | Stores connection strings and configuration secrets |
-| 12 | **Azure Data Factory** *(Option B only)* | — | Existing ADF pipeline modified to land Snowflake data in ADLS Gen2 |
-| 13 | **ADLS Gen2 Storage Account** *(Option B only)* | Standard LRS | Staging layer for de-identified Snowflake claims data; Fabric shortcuts ADLS Gen2 into Lakehouse |
+| 9 | **Microsoft Fabric Capacity** | F2 or higher | Hosts Lakehouse (de-identified claims + policy JSON), OneLake / ADLS Gen2 shortcuts |
+| 10 | **Azure Key Vault** | Standard | Stores connection strings and configuration secrets |
+| 11 | **Azure Data Factory** *(Option B only)* | — | Existing ADF pipeline modified to land Snowflake data in ADLS Gen2 |
+| 12 | **ADLS Gen2 Storage Account** *(Option B only)* | Standard LRS | Staging layer for de-identified Snowflake claims data; Fabric shortcuts ADLS Gen2 into Lakehouse |
 
 > **Snowflake** is an existing external resource; no new Azure provisioning is needed for it. De-identification is applied at the Snowflake extraction boundary — no PHI leaves Snowflake.
-> Items 12–13 are only required if Option B (ADF fallback) is used for claims data movement.
+> Items 11–12 are only required if Option B (ADF fallback) is used for claims data movement.
 
 ### Additional Production Resources (additive to POC)
 
@@ -570,14 +566,14 @@ These resources are added on top of the POC baseline when moving to Production:
 
 | # | Azure Resource | SKU / Tier | Purpose |
 |---|---|---|---|
-| 14 | **Azure Kubernetes Service (AKS)** | Private cluster, Standard_D8s_v5 node pool | Agent control plane runtime (Python FastAPI agents) |
-| 15 | **AKS User Managed Identity** | — | Workload identity for AKS pods; authenticates to Storage, Foundry, Fabric, Key Vault, Azure OpenAI |
-| 16 | **F5 BIG-IP** (VM or Virtual Edition) | Best / Better (as required) | TLS termination and load balancing in front of AKS |
-| 17 | **Private Endpoints** (×N) | — | Private connectivity for Storage, Foundry, FoundryIQ, Key Vault, Azure OpenAI |
-| 18 | **Private DNS Zones** (×N) | — | Name resolution for Private Endpoints |
-| 19 | **Azure Monitor / Log Analytics Workspace** | Pay-as-you-go | Observability for AKS, VM, and pipeline telemetry |
-| 20 | **Power BI Pro / Premium Per User** | Pro or PPU | Interactive dashboards for UM analytics outputs |
-| 21 | **NSG / Route Tables** | — | Network security rules enforcing private-only traffic |
-| 22 | **Azure Container Registry** | Basic or Standard | Container images for AKS agent workloads |
+| 13 | **Azure Kubernetes Service (AKS)** | Private cluster, Standard_D8s_v5 node pool | Agent control plane runtime (Python FastAPI agents) |
+| 14 | **AKS User Managed Identity** | — | Workload identity for AKS pods; authenticates to Storage, Foundry, Fabric, Key Vault |
+| 15 | **F5 BIG-IP** (VM or Virtual Edition) | Best / Better (as required) | TLS termination and load balancing in front of AKS |
+| 16 | **Private Endpoints** (×N) | — | Private connectivity for Storage, Foundry, FoundryIQ, Key Vault |
+| 17 | **Private DNS Zones** (×N) | — | Name resolution for Private Endpoints |
+| 18 | **Azure Monitor / Log Analytics Workspace** | Pay-as-you-go | Observability for AKS, VM, and pipeline telemetry |
+| 19 | **Power BI Pro / Premium Per User** | Pro or PPU | Interactive dashboards for UM analytics outputs |
+| 20 | **NSG / Route Tables** | — | Network security rules enforcing private-only traffic |
+| 21 | **Azure Container Registry** | Basic or Standard | Container images for AKS agent workloads |
 
-> **Total Production footprint** = POC resources (1–13) + Production additions (14–22).
+> **Total Production footprint** = POC resources (1–12) + Production additions (13–21).
