@@ -45,11 +45,17 @@ graph LR
         SNOWFLAKE["❄️ Snowflake"]
     end
 
+    subgraph CLAIMS_MOVEMENT["Claims Data Movement"]
+        direction TB
+        ONELAKE["🔗 OneLake Shortcut<br/><i>Option A: Snowflake interop (GA)</i>"]
+        ADF["🔄 Azure Data Factory<br/><i>Option B: ADF Pipeline</i>"]
+        ADLS["📦 ADLS Gen2<br/><i>Staging for Fabric shortcut</i>"]
+        ADF --> ADLS
+    end
+
     subgraph CLAIMS_FABRIC["Microsoft Fabric"]
         direction TB
-        ONELAKE["🔗 OneLake<br/><i>Snowflake interop (GA)</i>"]
         FABRIC_LAKEHOUSE["🏠 Fabric Lakehouse<br/><i>Claims + Policy JSON</i>"]
-        ONELAKE --> FABRIC_LAKEHOUSE
     end
 
     %% ───────────────────────────────────────────
@@ -78,7 +84,10 @@ graph LR
     POLICY_JSON -->|"Structured JSON"| FABRIC_LAKEHOUSE
     FOUNDRY_IQ -.->|"Indexed<br/>knowledge"| FOUNDRY_IQ_READ
     FOUNDRY_IQ_READ -.->|"Policy context<br/>(optional)"| VM
-    SNOWFLAKE -->|"OneLake<br/>shortcut"| ONELAKE
+    SNOWFLAKE -->|"Option A:<br/>OneLake interop"| ONELAKE
+    SNOWFLAKE -->|"Option B:<br/>Existing ADF pipeline"| ADF
+    ONELAKE -->|"Shortcut"| FABRIC_LAKEHOUSE
+    ADLS -->|"Shortcut"| FABRIC_LAKEHOUSE
     FABRIC_LAKEHOUSE -->|"Claims +<br/>policy data"| VM
     VM --> OUTPUT
 
@@ -92,13 +101,16 @@ graph LR
 
     classDef optionalDashed fill:#0078D4,stroke:#005A9E,color:#fff,stroke-width:2px,stroke-dasharray:5 5
 
-    class VM,STORAGE,POLICY_JSON azureBlue
+    classDef adfGreen fill:#008272,stroke:#005E5A,color:#fff,stroke-width:2px
+
+    class VM,STORAGE,POLICY_JSON,ADLS azureBlue
     class FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ optionalDashed
     class ONELAKE,FABRIC_LAKEHOUSE fabricPurple
     class SNOWFLAKE snowflakeBlue
     class CLI_REPORTS,CLI_FLAGS greenOut
     class UPMC_POLICIES sourceGray
     class BASTION bastionOrange
+    class ADF adfGreen
 ```
 
 ### POC Characteristics
@@ -152,11 +164,17 @@ graph LR
         SNOWFLAKE["❄️ Snowflake"]
     end
 
+    subgraph CLAIMS_MOVEMENT["Claims Data Movement"]
+        direction TB
+        ONELAKE["🔗 OneLake Shortcut<br/><i>Option A: Snowflake interop (GA)</i>"]
+        ADF["🔄 Azure Data Factory<br/><i>Option B: ADF Pipeline</i>"]
+        ADLS["📦 ADLS Gen2<br/><i>Staging for Fabric shortcut</i>"]
+        ADF --> ADLS
+    end
+
     subgraph CLAIMS_FABRIC["Microsoft Fabric"]
         direction TB
-        ONELAKE["🔗 OneLake<br/><i>Snowflake interop (GA)</i>"]
         FABRIC_LAKEHOUSE["🏠 Fabric Lakehouse<br/><i>Claims + Policy JSON</i>"]
-        ONELAKE --> FABRIC_LAKEHOUSE
     end
 
     %% ───────────────────────────────────────────
@@ -202,7 +220,10 @@ graph LR
     POLICY_JSON -->|"Structured JSON<br/>(Private Link)"| FABRIC_LAKEHOUSE
     FOUNDRY_IQ -.->|"Indexed<br/>knowledge"| FOUNDRY_IQ_READ
     FOUNDRY_IQ_READ -.->|"Policy context<br/>(optional)"| F5
-    SNOWFLAKE -->|"OneLake<br/>shortcut"| ONELAKE
+    SNOWFLAKE -->|"Option A:<br/>OneLake interop"| ONELAKE
+    SNOWFLAKE -->|"Option B:<br/>Existing ADF pipeline"| ADF
+    ONELAKE -->|"Shortcut"| FABRIC_LAKEHOUSE
+    ADLS -->|"Shortcut"| FABRIC_LAKEHOUSE
     FABRIC_LAKEHOUSE -->|"Claims +<br/>policy data<br/>(Private Link)"| F5
     VM -.->|"Admin<br/>access"| AKS
     CONTROL_PLANE --> OUTPUT
@@ -220,7 +241,9 @@ graph LR
 
     classDef optionalDashed fill:#0078D4,stroke:#005A9E,color:#fff,stroke-width:2px,stroke-dasharray:5 5
 
-    class AKS,ORCHESTRATOR,UM_AGENTS,STORAGE,POLICY_JSON,VM azureBlue
+    classDef adfGreen fill:#008272,stroke:#005E5A,color:#fff,stroke-width:2px
+
+    class AKS,ORCHESTRATOR,UM_AGENTS,STORAGE,POLICY_JSON,VM,ADLS azureBlue
     class FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ optionalDashed
     class ONELAKE,FABRIC_LAKEHOUSE fabricPurple
     class SNOWFLAKE snowflakeBlue
@@ -228,6 +251,7 @@ graph LR
     class UPMC_POLICIES sourceGray
     class BASTION bastionOrange
     class F5 f5Red
+    class ADF adfGreen
 ```
 
 ### Production Characteristics
@@ -271,13 +295,17 @@ The **Fabric Lakehouse** is the primary query surface. The VM (POC) or AKS agent
 
 ---
 
-## 2. Claims Data — Microsoft Fabric + Snowflake
+## 2. Claims Data — Snowflake → Microsoft Fabric
 
 ### Source
 
 Claims data resides in **Snowflake**, the existing enterprise data warehouse.
 
-### OneLake ↔ Snowflake Interoperability (GA)
+### Data Movement Options
+
+There are two options for landing Snowflake claims data in the Fabric Lakehouse. **Option A is preferred**; Option B is the fallback if the Snowflake team cannot deliver the required configuration in time.
+
+#### Option A — OneLake ↔ Snowflake Interoperability (Preferred)
 
 Microsoft OneLake and Snowflake interoperability is **now generally available**, enabling seamless cross-platform data access without data duplication:
 
@@ -289,9 +317,40 @@ Microsoft OneLake and Snowflake interoperability is **now generally available**,
 >
 > See also the FY26 co-sell guidance: *Snowflake + Microsoft Fabric: FY26 Co-Sell in Action*.
 
+**Snowflake team prerequisites:**
+
+- Create a service principal for OneLake access
+- Configure an external table pointing to OneLake
+- Write the database / tables to OneLake as Iceberg
+
+> **Next step:** Have the UPMC Snowflake team / representative vet out that they are capable of performing the tasks identified in the [Snowflake ↔ OneLake integration guide](https://blog.fabric.microsoft.com/en-US/blog/microsoft-onelake-and-snowflake-interoperability-is-now-generally-available) (create a service principal, an external table, write the database to OneLake, etc.).
+
+#### Option B — ADF Pipeline → ADLS Gen2 → Fabric Shortcut (Fallback)
+
+If the Snowflake team cannot act on Option A within the POC timeline, the fallback is to modify an **existing Azure Data Factory (ADF) pipeline** to land Snowflake data in **ADLS Gen2**, then use a **Fabric shortcut** to surface ADLS Gen2 in the Lakehouse.
+
+| Advantage | Detail |
+|---|---|
+| **No Snowflake team dependency** | Uses existing ADF connectivity; no service principal or external table creation required on the Snowflake side. |
+| **Faster time to data** | Gets claims data into our hands immediately using infrastructure already in place. |
+| **Non-blocking** | OneLake interop (Option A) can be pursued in parallel or during the Production phase. |
+
+**Flow:** `Snowflake → ADF Pipeline → ADLS Gen2 → Fabric Shortcut → Lakehouse`
+
+#### Decision Criteria
+
+| Factor | Option A (OneLake interop) | Option B (ADF → ADLS Gen2) |
+|---|---|---|
+| Snowflake team effort | Moderate (service principal, external table, Iceberg write) | None |
+| Data latency | Near real-time (zero-copy) | Batch (ADF schedule) |
+| Data duplication | None | Copy in ADLS Gen2 |
+| Long-term fit | Production-grade | POC / interim |
+
+> **Recommendation:** Put the ask in front of the Snowflake team. If they can move on this as needed, Option A is the path. If not, Option B is the Plan B that unblocks the POC without Snowflake team involvement.
+
 ### Fabric Lakehouse as Unified Store
 
-The **Fabric Lakehouse** serves as the single unified data layer, holding both claims data (via OneLake shortcuts from Snowflake) and structured policy JSON (from the ingestion pipeline). All downstream consumers read from the Lakehouse directly:
+Regardless of which data movement option is used, the **Fabric Lakehouse** serves as the single unified data layer, holding both claims data and structured policy JSON. All downstream consumers read from the Lakehouse directly:
 
 - **VM** (POC) — queries the Lakehouse for combined claims + policy data.
 - **AKS agents** (Production) — query the Lakehouse via Private Link.
@@ -300,8 +359,13 @@ The **Fabric Lakehouse** serves as the single unified data layer, holding both c
 ### Data Flow
 
 ```
-Snowflake ──(OneLake shortcut)──► Fabric Lakehouse ──► VM (POC) / AKS (Prod)
-Policy Docs ──(Ingestion JSON)──► Fabric Lakehouse ──► Power BI (DirectLake)
+Option A:  Snowflake ──(OneLake shortcut)──► Fabric Lakehouse
+Option B:  Snowflake ──► ADF ──► ADLS Gen2 ──(Fabric shortcut)──► Fabric Lakehouse
+
+Policy Docs ──(Ingestion JSON)──► Fabric Lakehouse
+
+Fabric Lakehouse ──► VM (POC) / AKS (Prod)
+Fabric Lakehouse ──► Power BI (DirectLake, Prod)
 ```
 
 ---
@@ -371,7 +435,7 @@ Both POC and Production use **User Managed Identities** (UMI) instead of service
 ## 6. Key Design Principles
 
 1. **Lakehouse as Unified Store** — Both structured policy JSON and claims data converge in the Fabric Lakehouse; all consumers (VM, AKS, Power BI) read from a single source of truth.
-2. **Zero-Copy Data Access** — OneLake shortcuts avoid duplicating Snowflake claims data into Fabric, reducing cost and data staleness.
+2. **Zero-Copy Data Access (Option A)** — OneLake shortcuts avoid duplicating Snowflake claims data into Fabric. Option B (ADF → ADLS Gen2) provides a fallback that unblocks the POC without Snowflake team dependencies.
 3. **Agent-Native Architecture** — The AKS control plane (Production) treats every analytic capability (detection, simulation, appeals, benchmarking) as a composable agent with tool-callable endpoints.
 4. **Explainability First** — All detection flags carry human-readable explanations; agents ground responses in retrieved policy text with citations.
 5. **Private by Default** — Production enforces private networking across all services; no data traverses the public internet.
@@ -395,10 +459,13 @@ All resources required to stand up the proof-of-concept environment:
 | 6 | **Azure Storage Account** | Standard LRS | Raw policy document storage |
 | 7 | **Azure AI Foundry** (Project) *(optional)* | — | Hosts the `text-embedding-3` model for policy vectorization (only if policy RAG is enabled) |
 | 8 | **FoundryIQ** *(optional)* | — | Knowledge index and grounding store over policy embeddings (only if policy RAG is enabled) |
-| 9 | **Microsoft Fabric Capacity** | F2 or higher | Hosts Lakehouse (claims + policy JSON), OneLake shortcuts |
+| 9 | **Microsoft Fabric Capacity** | F2 or higher | Hosts Lakehouse (claims + policy JSON), OneLake / ADLS Gen2 shortcuts |
 | 10 | **Azure Key Vault** | Standard | Stores connection strings and configuration secrets |
+| 11 | **Azure Data Factory** *(Option B only)* | — | Existing ADF pipeline modified to land Snowflake data in ADLS Gen2 |
+| 12 | **ADLS Gen2 Storage Account** *(Option B only)* | Standard LRS | Staging layer for Snowflake claims data; Fabric shortcuts ADLS Gen2 into Lakehouse |
 
 > **Snowflake** is an existing external resource; no new Azure provisioning is needed for it.
+> Items 11–12 are only required if Option B (ADF fallback) is used for claims data movement.
 
 ### Additional Production Resources (additive to POC)
 
@@ -406,14 +473,14 @@ These resources are added on top of the POC baseline when moving to Production:
 
 | # | Azure Resource | SKU / Tier | Purpose |
 |---|---|---|---|
-| 11 | **Azure Kubernetes Service (AKS)** | Private cluster, Standard_D8s_v5 node pool | Agent control plane runtime |
-| 12 | **AKS User Managed Identity** | — | Workload identity for AKS pods; authenticates to Storage, Foundry, Fabric, Key Vault |
-| 13 | **F5 BIG-IP** (VM or Virtual Edition) | Best / Better (as required) | WAF, TLS termination, and load balancing in front of AKS |
-| 14 | **Private Endpoints** (×N) | — | Private connectivity for Storage, Foundry, FoundryIQ, Key Vault |
-| 15 | **Private DNS Zones** (×N) | — | Name resolution for Private Endpoints |
-| 16 | **Azure Monitor / Log Analytics Workspace** | Pay-as-you-go | Observability for AKS, VM, and pipeline telemetry |
-| 17 | **Power BI Pro / Premium Per User** | Pro or PPU | Interactive dashboards for UM analytics outputs |
-| 18 | **NSG / Route Tables** | — | Network security rules enforcing private-only traffic |
-| 19 | **Azure Container Registry** | Basic or Standard | Container images for AKS agent workloads |
+| 13 | **Azure Kubernetes Service (AKS)** | Private cluster, Standard_D8s_v5 node pool | Agent control plane runtime |
+| 14 | **AKS User Managed Identity** | — | Workload identity for AKS pods; authenticates to Storage, Foundry, Fabric, Key Vault |
+| 15 | **F5 BIG-IP** (VM or Virtual Edition) | Best / Better (as required) | WAF, TLS termination, and load balancing in front of AKS |
+| 16 | **Private Endpoints** (×N) | — | Private connectivity for Storage, Foundry, FoundryIQ, Key Vault |
+| 17 | **Private DNS Zones** (×N) | — | Name resolution for Private Endpoints |
+| 18 | **Azure Monitor / Log Analytics Workspace** | Pay-as-you-go | Observability for AKS, VM, and pipeline telemetry |
+| 19 | **Power BI Pro / Premium Per User** | Pro or PPU | Interactive dashboards for UM analytics outputs |
+| 20 | **NSG / Route Tables** | — | Network security rules enforcing private-only traffic |
+| 21 | **Azure Container Registry** | Basic or Standard | Container images for AKS agent workloads |
 
-> **Total Production footprint** = POC resources (1–10) + Production additions (11–19).
+> **Total Production footprint** = POC resources (1–12) + Production additions (13–21).
