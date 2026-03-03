@@ -1,7 +1,7 @@
 # Specification — Production (Approach B)
 
 > Personas, use cases, and acceptance criteria for the **Production deployment** of the UM Claims Analytics platform.
-> Production replaces the manual CLI workflow with **AI agents** (Python FastAPI on AKS) that continuously generate UM insights, writing results to the Fabric Lakehouse for Power BI consumption.
+> Production replaces the manual VSCode/Copilot workflow with **AI agents** (Python FastAPI on AKS) that continuously generate UM insights, writing results to the Fabric Lakehouse for Power BI consumption.
 
 ---
 
@@ -259,14 +259,14 @@ The agents are **insight generators**, not decision-makers. The following handof
 
 | POC Artefact | Production Equivalent |
 |---|---|
-| Python CLI on VM | Python FastAPI agents on AKS |
+| VSCode + Copilot workflow on VM | Python FastAPI agents on AKS |
 | Manual `um-claims run-all` | Scheduled / API-triggered agent pipeline |
 | Markdown reports on VM filesystem | Power BI dashboards via DirectLake |
 | JSON flag files on VM | Lakehouse Delta tables + REST API |
 | Solution architect reviews output | UM analyst / SIU investigator review dashboards |
 | Single-run, manual seed | Continuous runs, fixed seed for reproducibility |
 | VM-only compute | AKS horizontal pod autoscaling |
-| No load balancer | F5 WAF + TLS termination |
+| No load balancer | F5 TLS termination + load balancing |
 | Direct Azure OpenAI access | Private Endpoint access only |
 
-> The core analytics logic (feature engineering, detection rules, policy simulation, appeals analysis, benchmarking) is **identical** between POC and Production. Production wraps it in a FastAPI service, adds orchestration, and replaces manual CLI invocation with automated agent execution.
+> The core analytics logic (feature engineering, detection rules, policy simulation, appeals analysis, benchmarking) is **identical** between POC and Production. Production wraps it in a FastAPI service, adds orchestration, and replaces the manual VSCode/Copilot-assisted workflow with automated agent execution.
