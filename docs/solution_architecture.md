@@ -379,7 +379,16 @@ The **Fabric Lakehouse** is the primary query surface. The VM (POC) or AKS agent
 
 Claims data resides in **Snowflake**, the existing enterprise data warehouse.
 
-> **⚠️ No PHI — Customer-Agreed Boundary.** All claims data extracted from Snowflake is **de-identified before it leaves Snowflake**. The Snowflake team is responsible for applying de-identification (removal or hashing of all HIPAA-defined identifiers) at the extraction boundary. No Protected Health Information (PHI) is present in OneLake, ADLS Gen2, the Fabric Lakehouse, compute layers (VM / AKS), Foundry LLM prompts, or any analytics output. This constraint was agreed with the customer and applies to both POC and Production.
+> **⚠️ No PHI — Customer-Agreed Boundary.** All claims data extracted from Snowflake is **de-identified before it leaves Snowflake**. The Snowflake team is responsible for applying de-identification (removal or hashing of all HIPAA-defined identifiers) at the extraction boundary. In particular, the original `MemberID` is replaced with a **one-way cryptographic hash** (e.g., SHA-256 with a secret salt held only by the Snowflake team), producing a new opaque `member_id` that preserves join consistency across claims for the same member but **cannot be reversed** back to the original identifier. No Protected Health Information (PHI) is present in OneLake, ADLS Gen2, the Fabric Lakehouse, compute layers (VM / AKS), Foundry LLM prompts, or any analytics output. This constraint was agreed with the customer and applies to both POC and Production.
+>
+> **De-identification scope (performed in Snowflake):**
+>
+> | Original Field | De-Identification Method | Downstream Column |
+> |---|---|---|
+> | `MemberID` | **One-way keyed hash** (SHA-256 + secret salt) — irreversible | `member_id` |
+> | Patient name, DOB, SSN, address, phone, email | **Removed** — not extracted | *(not present)* |
+> | `ProviderID` | **One-way keyed hash** (same approach) | `provider_id` |
+> | All other HIPAA identifiers | **Removed or hashed** per Safe Harbor method | *(removed or pseudonymized)* |
 
 ### Data Movement Options
 
@@ -399,7 +408,7 @@ Microsoft OneLake and Snowflake interoperability is **now generally available**,
 
 **Snowflake team prerequisites:**
 
-- **De-identify claims data** — strip or hash all HIPAA-defined identifiers before writing to OneLake (this is the extraction boundary for the no-PHI guarantee)
+- **De-identify claims data** — strip or hash all HIPAA-defined identifiers before writing to OneLake (this is the extraction boundary for the no-PHI guarantee). Specifically, convert `MemberID` (and `ProviderID`) to **one-way cryptographic hashes** (e.g., SHA-256 with a secret salt retained only by the Snowflake team); remove all direct identifiers (name, DOB, SSN, address, phone, email)
 - Create a service principal for OneLake access
 - Configure an external table pointing to OneLake
 - Write the de-identified database / tables to OneLake as Iceberg
@@ -525,6 +534,8 @@ OneLake/
                         │  ⚠️  DE-IDENTIFICATION BOUNDARY  │
                         │  Snowflake team strips/hashes   │
                         │  all HIPAA identifiers HERE     │
+                        │  MemberID → one-way SHA-256     │
+                        │  hash (irreversible)            │
                         │  BEFORE data leaves Snowflake   │
                         └────────────────┬────────────────┘
                                          │
@@ -610,7 +621,7 @@ Both POC and Production use **User Managed Identities** (UMI) instead of service
 
 ## 6. Key Design Principles
 
-1. **No PHI — De-Identified Claims Only** — All claims data is **de-identified in Snowflake before extraction**. No Protected Health Information leaves Snowflake. The Fabric Lakehouse, compute layers, LLM prompts, and all outputs contain only de-identified data. This is a customer-agreed, non-negotiable boundary.
+1. **No PHI — De-Identified Claims Only** — All claims data is **de-identified in Snowflake before extraction**. The original `MemberID` is converted to an irreversible one-way hash (`member_id`); all direct identifiers (name, DOB, SSN, address, etc.) are removed. No Protected Health Information leaves Snowflake. The Fabric Lakehouse, compute layers, LLM prompts, and all outputs contain only de-identified data. This is a customer-agreed, non-negotiable boundary.
 2. **Lakehouse as Unified Store** — Structured policy JSON, de-identified claims data, and **UM analytics outputs** (insights, flags, alerts) converge in the Fabric Lakehouse; all consumers (VM, AKS, Power BI) read from and write to a single source of truth.
 3. **Zero-Copy Data Access (Option A)** — OneLake shortcuts avoid duplicating Snowflake claims data into Fabric. Option B (ADF → ADLS Gen2) provides a fallback that unblocks the POC without Snowflake team dependencies.
 4. **Agent-Native Architecture** — The AKS control plane (Production) treats every analytic capability (detection, simulation, appeals, benchmarking) as a composable agent with tool-callable endpoints.
