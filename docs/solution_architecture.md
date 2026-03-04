@@ -1,6 +1,6 @@
 # Solution Architecture — UM Claims Analytics
 
-> High-level architecture for the UPMC Utilization Management Claims Analytics platform.
+> High-level architecture for the Utilization Management Claims Analytics platform.
 > Two deployment approaches are defined: a **POC** for rapid insights and a **Production** hardened deployment.
 
 ---
@@ -47,7 +47,7 @@ graph LR
     %% ───────────────────────────────────────────
     subgraph POLICY_SOURCE["Policy Source"]
         direction TB
-        UPMC_POLICIES["🌐 UPMC Health Plan<br/>Policies & Procedures"]
+        PAYER_POLICIES["🌐 Health Plan<br/>Policies & Procedures"]
     end
 
     subgraph POLICY_INGESTION["Policy Ingestion Pipeline"]
@@ -116,7 +116,7 @@ graph LR
     %% ───────────────────────────────────────────
     %% FLOWS
     %% ───────────────────────────────────────────
-    UPMC_POLICIES -->|"Crawl &<br/>download"| STORAGE
+    PAYER_POLICIES -->|"Crawl &<br/>download"| STORAGE
     POLICY_JSON -->|"Structured JSON"| FABRIC_LAKEHOUSE
     FOUNDRY_IQ -.->|"Indexed<br/>knowledge"| FOUNDRY_IQ_READ
     FOUNDRY_IQ_READ -.->|"Policy context<br/>(optional)"| VM
@@ -134,7 +134,7 @@ graph LR
     classDef default fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px
     classDef optionalDashed fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px,stroke-dasharray:5 5
 
-    class VM,STORAGE,POLICY_JSON,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,CLI_REPORTS,CLI_FLAGS,UPMC_POLICIES,BASTION,ADF,GPT,FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ default
+    class VM,STORAGE,POLICY_JSON,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,CLI_REPORTS,CLI_FLAGS,PAYER_POLICIES,BASTION,ADF,GPT,FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ default
     class FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ optionalDashed
 
     %% Subgraph backgrounds
@@ -205,7 +205,7 @@ graph LR
     %% ───────────────────────────────────────────
     subgraph POLICY_SOURCE["Policy Sources (Production)"]
         direction TB
-        UPMC_POLICIES["🌐 UPMC Health Plan<br/>Policies & Procedures"]
+        PAYER_POLICIES["🌐 Health Plan<br/>Policies & Procedures"]
         ALT_POLICIES["🌐 Additional Public Policy Sites<br/><i>CMS · State Medicaid · Other Payers</i>"]
     end
 
@@ -292,7 +292,7 @@ graph LR
     %% ───────────────────────────────────────────
     %% FLOWS
     %% ───────────────────────────────────────────
-    UPMC_POLICIES -->|"Crawl &<br/>download"| STORAGE
+    PAYER_POLICIES -->|"Crawl &<br/>download"| STORAGE
     ALT_POLICIES -->|"Crawl &<br/>download"| STORAGE
     POLICY_JSON -->|"Structured JSON<br/>(Private Link)"| FABRIC_LAKEHOUSE
     FOUNDRY_IQ -.->|"Indexed<br/>knowledge"| FOUNDRY_IQ_READ
@@ -313,7 +313,7 @@ graph LR
     classDef default fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px
     classDef optionalDashed fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px,stroke-dasharray:5 5
 
-    class AKS,ORCHESTRATOR,UM_AGENTS,STORAGE,POLICY_JSON,VM,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,POWERBI,FLAGS,RECOMMENDATIONS,UPMC_POLICIES,ALT_POLICIES,BASTION,F5,ADF,GPT default
+    class AKS,ORCHESTRATOR,UM_AGENTS,STORAGE,POLICY_JSON,VM,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,POWERBI,FLAGS,RECOMMENDATIONS,PAYER_POLICIES,ALT_POLICIES,BASTION,F5,ADF,GPT default
     class FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ optionalDashed
 
     %% Subgraph backgrounds
@@ -348,17 +348,15 @@ graph LR
 
 ### Source
 
-UPMC Health Plan publishes clinical and administrative policies at:
+The health plan publishes clinical and administrative policies on its provider-facing website.
 
-<https://www.upmchealthplan.com/providers/medical/resources/manuals/policies-procedures>
-
-In the **POC**, only the UPMC policy site above is targeted. In **Production**, the ingestion pipeline extends to crawl **additional public policy sites** (e.g. CMS.gov national coverage determinations, state Medicaid bulletins, other payer-published medical policies) to enrich the CPT-code linkage analysis with broader industry context.
+In the **POC**, only the primary payer policy site is targeted. In **Production**, the ingestion pipeline extends to crawl **additional public policy sites** (e.g. CMS.gov national coverage determinations, state Medicaid bulletins, other payer-published medical policies) to enrich the CPT-code linkage analysis with broader industry context.
 
 ### Ingestion Pipeline (write path)
 
 | Component | Role |
 |---|---|
-| **Azure Storage Account** | Stores raw policy documents (PDF/HTML) after crawling from the UPMC policy site (POC) or multiple public policy sites (Production). In Production, accessed only via Private Endpoint. |
+| **Azure Storage Account** | Stores raw policy documents (PDF/HTML) after crawling from the payer policy site (POC) or multiple public policy sites (Production). In Production, accessed only via Private Endpoint. |
 | **Azure AI Foundry — `text-embedding-3`** *(optional)* | Generates dense vector embeddings for each policy chunk, enabling semantic similarity search. Only needed if policy RAG is enabled. |
 | **FoundryIQ** *(optional)* | Builds and maintains the knowledge index over the embedded policy corpus. Only needed if policy RAG is enabled. |
 | **Structured JSON → Fabric Lakehouse** | The ingestion pipeline parses policy documents into structured JSON (policy metadata, rules, criteria, CPT/ICD linkages) and writes them to the **OneLake Fabric Lakehouse**. This co-locates policy data alongside claims data in a single unified store. |
@@ -408,7 +406,7 @@ Microsoft OneLake and Snowflake interoperability is **now generally available**,
 - Configure an external table pointing to OneLake
 - Write the de-identified database / tables to OneLake as Iceberg
 
-> **Next step:** Have the UPMC Snowflake team / representative vet out that they are capable of performing the tasks identified in the [Snowflake ↔ OneLake integration guide](https://blog.fabric.microsoft.com/en-US/blog/microsoft-onelake-and-snowflake-interoperability-is-now-generally-available) (create a service principal, an external table, write the database to OneLake, etc.).
+> **Next step:** Have the customer Snowflake team / representative vet out that they are capable of performing the tasks identified in the [Snowflake ↔ OneLake integration guide](https://blog.fabric.microsoft.com/en-US/blog/microsoft-onelake-and-snowflake-interoperability-is-now-generally-available) (create a service principal, an external table, write the database to OneLake, etc.).
 
 #### Option B — ADF Pipeline → ADLS Gen2 → Fabric Shortcut (Fallback)
 

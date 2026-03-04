@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This project provides a **production-grade, specification-driven Python solution** for Utilization Management (UM) analytics in a payer environment. It operates exclusively on synthetic data and demonstrates patterns applicable to UPMC Health Plan's scale (~43 M claims/year).
+This project provides a **production-grade, specification-driven Python solution** for Utilization Management (UM) analytics in a payer environment. It operates exclusively on synthetic data and demonstrates patterns applicable health claims.
 
 ## Core Principles
 

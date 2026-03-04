@@ -10,10 +10,10 @@
 | Persona | Role | How They Interact |
 |---|---|---|
 | **Solution Architect** | Primary operator. Uses VSCode with GitHub Copilot (Claude Opus 4.6, fast mode) on the VM, reviews LLM-generated summaries, validates flags, and iterates on pipeline configuration. | SSH/RDP into the VM via Azure Bastion → runs `um-claims run-all` from VSCode → reviews Markdown reports and JSON flag files on the VM filesystem. |
-| **Solution Engineer** | Extends the pipeline — adds new detection rules, adapts schema mappings for UPMC data shapes, tunes thresholds. Tests changes locally before pushing to the VM. | Develops locally or on the VM → runs `pytest` → pushes updates → re-runs the pipeline to validate. |
-| **Data Engineer (UPMC)** | Prepares the de-identified claims extract in Snowflake and configures the OneLake shortcut (Option A) or ADF pipeline (Option B). | Works in Snowflake / ADF → validates data lands in the Fabric Lakehouse → hands off to the solution architect. |
-| **UM Analyst (UPMC)** | Consumes the output reports and flags produced by the solution architect. Provides domain feedback on flag relevance and threshold tuning. | Reviews Markdown reports / JSON files shared by the solution architect. May also view Lakehouse tables in Power BI (if available). |
-| **UM Director (UPMC)** | Reviews high-level POC findings to decide whether to proceed to Production. | Reads executive summary produced by the solution architect; reviews sample dashboards if Power BI is connected. |
+| **Solution Engineer** | Extends the pipeline — adds new detection rules, adapts schema mappings for customer data shapes, tunes thresholds. Tests changes locally before pushing to the VM. | Develops locally or on the VM → runs `pytest` → pushes updates → re-runs the pipeline to validate. |
+| **Data Engineer** | Prepares the de-identified claims extract in Snowflake and configures the OneLake shortcut (Option A) or ADF pipeline (Option B). | Works in Snowflake / ADF → validates data lands in the Fabric Lakehouse → hands off to the solution architect. |
+| **UM Analyst** | Consumes the output reports and flags produced by the solution architect. Provides domain feedback on flag relevance and threshold tuning. | Reviews Markdown reports / JSON files shared by the solution architect. May also view Lakehouse tables in Power BI (if available). |
+| **UM Director** | Reviews high-level POC findings to decide whether to proceed to Production. | Reads executive summary produced by the solution architect; reviews sample dashboards if Power BI is connected. |
 
 ---
 
@@ -26,7 +26,7 @@
 **Preconditions:**
 - De-identified claims data has been landed in the Fabric Lakehouse (via Option A or B).
 - Structured policy JSON has been ingested into the Lakehouse.
-- Azure OpenAI deployment (GPT-5.2-chat) is provisioned with `temperature=0` and a fixed `seed`.
+- Azure AI Foundry deployment (GPT-5.2-mini) is provisioned with `temperature=0` and a fixed `seed`.
 
 **Flow:**
 1. Solution architect connects to the Azure VM via Bastion.
@@ -34,7 +34,7 @@
 3. The pipeline reads de-identified claims and policy data from the Fabric Lakehouse.
 4. Feature engineering computes per-provider, per-facility, and temporal metrics.
 5. Detection rules flag outliers, OON DME clusters, and billing anomalies.
-6. CPT-code join results are sent to GPT-5.2-chat (`temperature=0`, fixed `seed`) for summarisation.
+6. CPT-code join results are sent to GPT-5.2-mini (`temperature=0`, fixed `seed`) for summarisation.
 7. GPT returns plain-language anomaly explanations and flag recommendations.
 8. Results (UM insights, flags, alerts) are written back to the Fabric Lakehouse as Delta tables.
 9. Markdown report and JSON flag files are written to the VM filesystem.
@@ -112,7 +112,7 @@
 **Flow:**
 1. Run `um-claims run-all` (or `um-claims report` on pre-computed features).
 2. Policy simulation compares pre/post utilisation for affected services.
-3. GPT-5.2-chat summarises the impact in plain language.
+3. GPT-5.2-mini summarises the impact in plain language.
 4. Result is included in the Markdown report and written to the Lakehouse.
 
 **Postconditions:**
@@ -152,7 +152,7 @@
 | Constraint | Enforcement |
 |---|---|
 | **No PHI in claims data** | De-identification is applied in Snowflake before extraction. The Snowflake team owns this boundary. |
-| **No PHI in LLM prompts** | The pipeline sends only de-identified CPT-code join results and policy text to Azure OpenAI. |
+| **No PHI in LLM prompts** | The pipeline sends only de-identified CPT-code join results and policy text to Azure AI Foundry. |
 | **No PHI in outputs** | All Markdown reports, JSON files, and Lakehouse tables are derived from de-identified data. |
 | **No PHI in logs** | Pipeline logs do not include claim-level data; only aggregate counts and error messages. |
 
@@ -162,7 +162,7 @@
 
 | Parameter | Value | Rationale |
 |---|---|---|
-| **Model** | GPT-5.2-chat (Azure OpenAI) | Customer-approved model deployment. |
+| **Model** | GPT-5.2-mini (Azure AI Foundry) | Customer-approved model deployment. |
 | **`temperature`** | `0` | Eliminates sampling randomness; produces the most likely completion. |
 | **`seed`** | Fixed integer (configurable, default `42`) | Combined with `temperature=0`, maximises output determinism across runs. |
 | **`max_tokens`** | Capped per prompt type | Prevents runaway token usage. |
@@ -175,7 +175,7 @@
 
 | Metric | Target |
 |---|---|
-| Pipeline runs end-to-end on de-identified UPMC claims | Yes, within 1 day of data landing |
+| Pipeline runs end-to-end on de-identified claims | Yes, within 1 day of data landing |
 | All planted anomalies detected | 100% recall on synthetic + seeded patterns |
 | False-positive rate acceptable to UM analyst | < 15% on initial thresholds; tuneable |
 | LLM summaries are reproducible | Identical across runs with same seed/input |
