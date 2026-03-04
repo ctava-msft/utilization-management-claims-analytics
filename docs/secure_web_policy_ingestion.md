@@ -330,7 +330,7 @@ Reference implementation: [ctava-msft/web-summarization](https://github.com/ctav
 
 ### When to Use
 
-- You need to **search** for policies across the open web (e.g., "UPMC prior auth policy for CPT 27447").
+- You need to **search** for policies across the open web (e.g., "prior auth policy for CPT 27447").
 - You want **LLM-generated summaries** with citations for analyst review.
 - You're enriching existing policy data with supplementary public information.
 
