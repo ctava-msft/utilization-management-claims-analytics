@@ -7,9 +7,9 @@
 
 ## Approach A — POC
 
-The POC approach is to derive insights with minimal infrastructure. A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on a **VM** (accessed through Azure Bastion). The Copilot-assisted workflow joins **de-identified** claims data with policy CPT codes from the Fabric Lakehouse, then calls a **language model hosted in Azure AI Foundry (e.g. GPT-5.2-chat)** to summarize and analyze the CPT-code linkages — identifying anomalies, generating plain-language explanations, and producing flag recommendations. Output is consumed as **Markdown reports and JSON files**. No AKS or Power BI is required at this stage.
+The POC approach is to derive insights with minimal infrastructure. A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on a **VDI** (Virtual Desktop Infrastructure). The Copilot-assisted workflow joins **de-identified** claims data with policy CPT codes from the Fabric Lakehouse, then calls a **language model hosted in Azure AI Foundry (e.g. GPT-5.2-mini)** to summarize and analyze the CPT-code linkages — identifying anomalies, generating plain-language explanations, and producing flag recommendations. Output is consumed as **Markdown reports and JSON files**. No AKS or Power BI is required at this stage.
 
-> **No PHI.** All claims data extracted from Snowflake is **de-identified before leaving Snowflake**. No Protected Health Information (PHI) is present in the Fabric Lakehouse, the VM, the LLM prompts, or any analytics output. This was agreed with the customer as a non-negotiable boundary.
+> **No PHI.** All claims data extracted from Snowflake is **de-identified before leaving Snowflake**. No Protected Health Information (PHI) is present in the Fabric Lakehouse, the VDI, the LLM prompts, or any analytics output. This was agreed with the customer as a non-negotiable boundary.
 
 ### POC Architecture Diagram
 
@@ -95,13 +95,11 @@ graph LR
     end
 
     %% ───────────────────────────────────────────
-    %% COMPUTE — Center (VM for POC)
+    %% COMPUTE — Center (VDI for POC)
     %% ───────────────────────────────────────────
     subgraph ACCESS["Secure Access"]
         direction TB
-        BASTION["🔒 Azure Bastion"]
-        VM["🖥️ Azure VM<br/><i>Solution Architect uses<br/>VSCode + GitHub Copilot<br/>(Claude Opus 4.6, fast mode)<br/>User Managed Identity</i>"]
-        BASTION --> VM
+        VDI["🖥️ VDI<br/><i>Solution Architect uses<br/>VSCode + GitHub Copilot<br/>(Claude Opus 4.6, fast mode)<br/>User Managed Identity</i>"]
     end
 
     %% ───────────────────────────────────────────
@@ -119,22 +117,22 @@ graph LR
     PAYER_POLICIES -->|"Crawl &<br/>download"| STORAGE
     POLICY_JSON -->|"Structured JSON"| FABRIC_LAKEHOUSE
     FOUNDRY_IQ -.->|"Indexed<br/>knowledge"| FOUNDRY_IQ_READ
-    FOUNDRY_IQ_READ -.->|"Policy context<br/>(optional)"| VM
+    FOUNDRY_IQ_READ -.->|"Policy context<br/>(optional)"| VDI
     SNOWFLAKE -->|"Option A:<br/>De-identified claims<br/>OneLake interop"| ONELAKE
     SNOWFLAKE -->|"Option B:<br/>De-identified claims<br/>ADF pipeline"| ADF
     ONELAKE -->|"Shortcut"| FABRIC_LAKEHOUSE
     ADLS -->|"Shortcut"| FABRIC_LAKEHOUSE
-    FABRIC_LAKEHOUSE -->|"De-identified claims<br/>+ policy data"| VM
-    VM -->|"CPT join results<br/>→ LLM summarisation"| GPT
-    GPT -->|"Summaries &<br/>flag recommendations"| VM
-    VM -->|"Write UM insights,<br/>flags & alerts"| FABRIC_LAKEHOUSE
-    VM --> OUTPUT
+    FABRIC_LAKEHOUSE -->|"De-identified claims<br/>+ policy data"| VDI
+    VDI -->|"CPT join results<br/>→ LLM summarisation"| GPT
+    GPT -->|"Summaries &<br/>flag recommendations"| VDI
+    VDI -->|"Write UM insights,<br/>flags & alerts"| FABRIC_LAKEHOUSE
+    VDI --> OUTPUT
 
     %% Styling
     classDef default fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px
     classDef optionalDashed fill:#FFFFFF,stroke:#000000,color:#000000,stroke-width:2px,stroke-dasharray:5 5
 
-    class VM,STORAGE,POLICY_JSON,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,CLI_REPORTS,CLI_FLAGS,PAYER_POLICIES,BASTION,ADF,GPT,FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ default
+    class VDI,STORAGE,POLICY_JSON,ADLS,ONELAKE,FABRIC_LAKEHOUSE,SNOWFLAKE,CLI_REPORTS,CLI_FLAGS,PAYER_POLICIES,ADF,GPT,FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ default
     class FOUNDRY_EMBED,FOUNDRY_IQ,FOUNDRY_IQ_READ optionalDashed
 
     %% Subgraph backgrounds
@@ -153,13 +151,13 @@ graph LR
 
 | Aspect | Detail |
 |---|---|
-| **Compute** | Single Azure VM accessed via **Azure Bastion** (no public IP on the VM). |
-| **Identity** | **User Managed Identity** assigned to the VM; used for authenticating to Storage, Foundry, Fabric, and Foundry LLM endpoints. |
-| **Pipeline execution** | A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on the VM to run the `um-claims run-all` pipeline. The script reads **de-identified** claims and structured policy data from the Fabric Lakehouse, joins them on CPT codes, and sends the join results to **Azure AI Foundry (GPT-5.2-chat)** for summarisation — producing anomaly explanations, plain-language findings, and flag recommendations. Results are **written back to the Fabric Lakehouse** (UM insights, flags, and alerts tables) so they can be reported on, in addition to local Markdown/JSON output files. |
+| **Compute** | **VDI** (Virtual Desktop Infrastructure) — solution architect works within a managed virtual desktop. |
+| **Identity** | **User Managed Identity** assigned to the VDI; used for authenticating to Storage, Foundry, Fabric, and Foundry LLM endpoints. |
+| **Pipeline execution** | A **solution architect** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** on the VDI to run the `um-claims run-all` pipeline. The script reads **de-identified** claims and structured policy data from the Fabric Lakehouse, joins them on CPT codes, and sends the join results to **Azure AI Foundry (GPT-5.2-mini)** for summarisation — producing anomaly explanations, plain-language findings, and flag recommendations. Results are **written back to the Fabric Lakehouse** (UM insights, flags, and alerts tables) so they can be reported on, in addition to local Markdown/JSON output files. |
 | **LLM role** | **GPT-5.2-chat** (Azure AI Foundry) is called by the Python script to summarise and interpret CPT-code linkages between de-identified claims and policy data. The model generates human-readable explanations that the solution architect reviews. **No PHI is sent to the LLM.** |
 | **LLM determinism** | All Foundry LLM calls enforce **`temperature=0`** and a **fixed `seed`** parameter so that LLM summaries do not vary across runs. This aligns with the project's determinism and reproducibility requirement. |
-| **Data privacy** | All claims data is **de-identified in Snowflake before extraction**. No PHI is present in the Lakehouse, on the VM, in LLM prompts, or in any output artefact. |
-| **Networking** | VM sits in a VNet; Bastion provides secure RDP/SSH without exposing the VM to the internet. |
+| **Data privacy** | All claims data is **de-identified in Snowflake before extraction**. No PHI is present in the Lakehouse, on the VDI, in LLM prompts, or in any output artefact. |
+| **Networking** | VDI is accessed through the customer's managed virtual desktop infrastructure; no direct internet exposure. |
 
 ---
 

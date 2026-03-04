@@ -1,7 +1,7 @@
 # Specification — POC (Approach A)
 
 > Personas, use cases, and acceptance criteria for the **POC deployment** of the UM Claims Analytics platform.
-> The POC runs on a single Azure VM where a **solution architect / solution engineer** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** to drive the analytics pipeline.
+> The POC runs on a **VDI** (Virtual Desktop Infrastructure) where a **solution architect / solution engineer** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** to drive the analytics pipeline.
 
 ---
 
@@ -9,8 +9,8 @@
 
 | Persona | Role | How They Interact |
 |---|---|---|
-| **Solution Architect** | Primary operator. Uses VSCode with GitHub Copilot (Claude Opus 4.6, fast mode) on the VM, reviews LLM-generated summaries, validates flags, and iterates on pipeline configuration. | SSH/RDP into the VM via Azure Bastion → runs `um-claims run-all` from VSCode → reviews Markdown reports and JSON flag files on the VM filesystem. |
-| **Solution Engineer** | Extends the pipeline — adds new detection rules, adapts schema mappings for customer data shapes, tunes thresholds. Tests changes locally before pushing to the VM. | Develops locally or on the VM → runs `pytest` → pushes updates → re-runs the pipeline to validate. |
+| **Solution Architect** | Primary operator. Uses VSCode with GitHub Copilot (Claude Opus 4.6, fast mode) on the VDI, reviews LLM-generated summaries, validates flags, and iterates on pipeline configuration. | Connects to the VDI → runs `um-claims run-all` from VSCode → reviews Markdown reports and JSON flag files on the VDI filesystem. |
+| **Solution Engineer** | Extends the pipeline — adds new detection rules, adapts schema mappings for customer data shapes, tunes thresholds. Tests changes locally before pushing to the VDI. | Develops locally or on the VDI → runs `pytest` → pushes updates → re-runs the pipeline to validate. |
 | **Data Engineer** | Prepares the de-identified claims extract in Snowflake and configures the OneLake shortcut (Option A) or ADF pipeline (Option B). | Works in Snowflake / ADF → validates data lands in the Fabric Lakehouse → hands off to the solution architect. |
 | **UM Analyst** | Consumes the output reports and flags produced by the solution architect. Provides domain feedback on flag relevance and threshold tuning. | Reviews Markdown reports / JSON files shared by the solution architect. May also view Lakehouse tables in Power BI (if available). |
 | **UM Director** | Reviews high-level POC findings to decide whether to proceed to Production. | Reads executive summary produced by the solution architect; reviews sample dashboards if Power BI is connected. |
@@ -29,7 +29,7 @@
 - Azure AI Foundry deployment (GPT-5.2-mini) is provisioned with `temperature=0` and a fixed `seed`.
 
 **Flow:**
-1. Solution architect connects to the Azure VM via Bastion.
+1. Solution architect connects to the VDI.
 2. Runs `um-claims run-all --seed 42 --output-dir ./output`.
 3. The pipeline reads de-identified claims and policy data from the Fabric Lakehouse.
 4. Feature engineering computes per-provider, per-facility, and temporal metrics.
@@ -37,12 +37,12 @@
 6. CPT-code join results are sent to GPT-5.2-mini (`temperature=0`, fixed `seed`) for summarisation.
 7. GPT returns plain-language anomaly explanations and flag recommendations.
 8. Results (UM insights, flags, alerts) are written back to the Fabric Lakehouse as Delta tables.
-9. Markdown report and JSON flag files are written to the VM filesystem.
+9. Markdown report and JSON flag files are written to the VDI filesystem.
 10. Solution architect reviews output, validates flags with the UM analyst.
 
 **Postconditions:**
 - Lakehouse contains UM insight, flag, and alert tables.
-- VM filesystem contains `report.md`, `flags.json`, `appeals_report.json`, etc.
+- VDI filesystem contains `report.md`, `flags.json`, `appeals_report.json`, etc.
 - Re-running with the same `--seed` and input data produces identical output (determinism).
 
 **Acceptance Criteria:**
