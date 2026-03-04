@@ -485,7 +485,7 @@ The Fabric Lakehouse is organized using a **medallion architecture** to enforce 
 
 | Layer | Lakehouse | Contents | Quality Gate |
 |---|---|---|---|
-| **Bronze** | `lh_bronze` | Raw, unmodified landing zone. Snowflake extracts (Parquet via OneLake shortcut or ADF), raw policy documents (Markdown/JSON from ingestion pipeline), and any external datasets (e.g., Kaggle CSV). Data is stored as-is for auditability and replay. | None — append-only, immutable raw files. |
+| **Bronze** | `lh_bronze` | Raw, unmodified landing zone. **All Snowflake claims data must be de-identified before it reaches this layer** — the Snowflake team strips or hashes all HIPAA-defined identifiers at the extraction boundary, before data is written to OneLake (Option A) or picked up by ADF (Option B). Bronze also holds raw policy documents (Markdown/JSON from ingestion pipeline) and any external datasets (e.g., Kaggle CSV). Data is stored as-is for auditability and replay. **No PHI is present in Bronze or any subsequent layer.** | None — append-only, immutable raw files. De-identification verified at source (Snowflake). |
 | **Silver** | `lh_silver` | Cleansed and conformed data. Claims pass through the schema gate (`schema.py` validation), column normalization (`kaggle_schema_adapter.py`), type casting, null handling, and deduplication. Policy documents are parsed (`parse_policy_md.py`) into canonical structured JSON. Delta tables with merge/upsert semantics. | Schema validation passes. Required columns present, correct types, no duplicates. |
 | **Gold** | `lh_gold` | Analytics-ready outputs produced by the UM pipeline. Includes detection flags, policy simulation results, appeals analysis, benchmark comparisons, and aggregated KPIs. These are the tables consumed by Power BI (DirectLake) and exposed via the API layer in Production. | Pipeline `run-all` completes successfully; validation report passes. |
 
@@ -501,7 +501,7 @@ The Fabric Lakehouse is organized using a **medallion architecture** to enforce 
 ```
 OneLake/
 ├── lh_bronze/
-│   ├── claims/              ← raw Snowflake extracts (Parquet)
+│   ├── claims/              ← de-identified Snowflake extracts (Parquet) — NO PHI
 │   ├── policies_raw/        ← raw policy Markdown / HTML / PDF
 │   └── external/            ← Kaggle CSV, reference data
 ├── lh_silver/
@@ -521,13 +521,23 @@ OneLake/
 ### Data Flow
 
 ```
-Option A:  Snowflake ──(OneLake shortcut)──► Fabric Lakehouse
-Option B:  Snowflake ──► ADF ──► ADLS Gen2 ──(Fabric shortcut)──► Fabric Lakehouse
+                        ┌─────────────────────────────────┐
+                        │  ⚠️  DE-IDENTIFICATION BOUNDARY  │
+                        │  Snowflake team strips/hashes   │
+                        │  all HIPAA identifiers HERE     │
+                        │  BEFORE data leaves Snowflake   │
+                        └────────────────┬────────────────┘
+                                         │
+                                         ▼ (de-identified only)
+Option A:  Snowflake ──(OneLake shortcut)──► lh_bronze/claims/
+Option B:  Snowflake ──► ADF ──► ADLS Gen2 ──(Fabric shortcut)──► lh_bronze/claims/
 
-Policy Docs ──(Ingestion JSON)──► Fabric Lakehouse
+Policy Docs ──(Ingestion JSON)──► lh_bronze/policies_raw/
 
-Fabric Lakehouse ──► VM (POC) / AKS (Prod)  [read de-identified claims + policy]
-VM / AKS ──(write UM outputs)──► Fabric Lakehouse  [insights, flags, alerts]
+lh_bronze ──(schema gate)──► lh_silver ──(pipeline)──► lh_gold
+
+lh_silver/lh_gold ──► VM (POC) / AKS (Prod)  [read de-identified claims + policy]
+VM / AKS ──(write UM outputs)──► lh_gold  [insights, flags, alerts]
 
 Note: All claims data is de-identified in Snowflake before extraction. No PHI at any stage.
 Fabric Lakehouse ──► Power BI (DirectLake, POC & Prod)
