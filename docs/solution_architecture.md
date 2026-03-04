@@ -459,6 +459,65 @@ Microsoft Fabric supports **Customer Managed Keys (CMK)** for encryption of data
 
 > **Note:** CMK for Fabric is available on **Fabric F SKUs** (F64 and above). Verify SKU eligibility before planning CMK enablement.
 
+### Medallion Architecture (Bronze / Silver / Gold)
+
+The Fabric Lakehouse is organized using a **medallion architecture** to enforce data quality progression and clear lineage from raw ingestion through to analytics-ready outputs.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Fabric Lakehouse — OneLake                           │
+│                                                                             │
+│  ┌───────────────┐     ┌───────────────┐     ┌───────────────┐             │
+│  │    BRONZE      │     │    SILVER      │     │     GOLD      │             │
+│  │  (Raw Landing) │────►│  (Cleansed)    │────►│  (Analytics)  │             │
+│  └───────────────┘     └───────────────┘     └───────────────┘             │
+│                                                                             │
+│  Bronze:                Silver:               Gold:                         │
+│  - Raw Snowflake        - Schema-validated     - UM insights & flags        │
+│    extracts (Parquet)     claims (Delta)       - Policy impact scores       │
+│  - Raw policy docs      - Canonical policy     - Appeals analysis           │
+│    (Markdown/JSON)        JSON (Delta)         - Benchmark comparisons      │
+│  - Kaggle CSV imports   - Deduped, typed,      - Aggregated KPIs            │
+│  - No transforms          null-handled         - Power BI–ready tables      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+| Layer | Lakehouse | Contents | Quality Gate |
+|---|---|---|---|
+| **Bronze** | `lh_bronze` | Raw, unmodified landing zone. Snowflake extracts (Parquet via OneLake shortcut or ADF), raw policy documents (Markdown/JSON from ingestion pipeline), and any external datasets (e.g., Kaggle CSV). Data is stored as-is for auditability and replay. | None — append-only, immutable raw files. |
+| **Silver** | `lh_silver` | Cleansed and conformed data. Claims pass through the schema gate (`schema.py` validation), column normalization (`kaggle_schema_adapter.py`), type casting, null handling, and deduplication. Policy documents are parsed (`parse_policy_md.py`) into canonical structured JSON. Delta tables with merge/upsert semantics. | Schema validation passes. Required columns present, correct types, no duplicates. |
+| **Gold** | `lh_gold` | Analytics-ready outputs produced by the UM pipeline. Includes detection flags, policy simulation results, appeals analysis, benchmark comparisons, and aggregated KPIs. These are the tables consumed by Power BI (DirectLake) and exposed via the API layer in Production. | Pipeline `run-all` completes successfully; validation report passes. |
+
+#### Layer Transitions
+
+| Transition | Process | Trigger |
+|---|---|---|
+| **Bronze → Silver** | `ingest.py` + `schema.py` validation + `kaggle_schema_adapter.py` normalization + `parse_policy_md.py` parsing | On data arrival (manual in POC, scheduled/event-driven in Prod) |
+| **Silver → Gold** | `um-claims run-all` pipeline: `features.py` → `detection.py` → `policy_sim.py` → `appeals.py` → `benchmarking.py` → `reporting.py` | Manual CLI run (POC) or FastAPI agent trigger (Prod) |
+
+#### Naming Convention
+
+```
+OneLake/
+├── lh_bronze/
+│   ├── claims/              ← raw Snowflake extracts (Parquet)
+│   ├── policies_raw/        ← raw policy Markdown / HTML / PDF
+│   └── external/            ← Kaggle CSV, reference data
+├── lh_silver/
+│   ├── claims/              ← validated, typed Delta tables
+│   ├── policies/            ← canonical policy JSON (Delta)
+│   └── providers/           ← provider reference data (Delta)
+└── lh_gold/
+    ├── detection_flags/     ← anomaly & outlier flags
+    ├── policy_impact/       ← pre/post policy simulation
+    ├── appeals_analysis/    ← appeal rates, cost, outcomes
+    ├── benchmarks/          ← peer comparisons
+    └── kpis/                ← aggregated UM KPIs for Power BI
+```
+
+> **Note:** In the POC, all three layers can reside within a single Fabric workspace. In Production, consider separate workspaces per layer with distinct RBAC to enforce least-privilege access (e.g., data engineers write to Bronze/Silver; analysts read Gold only).
+
 ### Data Flow
 
 ```
