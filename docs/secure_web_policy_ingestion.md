@@ -342,7 +342,7 @@ Natural-language query
         ▼
 ┌──────────────────────────────────┐
 │  Azure AI Foundry Agent          │
-│  - GPT-5.2-chat model            │
+│  - GPT-5.2-mini model            │
 │  - Bing Grounding tool           │
 │  - Streaming responses           │
 └────────┬─────────────────────────┘
@@ -460,7 +460,7 @@ Deployed via `azd up` using the [web-summarization](https://github.com/ctava-msf
 | Resource | Purpose |
 |---|---|
 | Azure AI Foundry (AIServices) | Unified AI account with built-in project |
-| GPT-5.2-chat Deployment | Summarization model |
+| GPT-5.2-mini Deployment | Summarization model |
 | Bing Grounding | Web search capabilities |
 | Agents Capability | Runtime orchestration |
 
@@ -594,7 +594,7 @@ Ingested policy documents
          │  query-time retrieval
          ▼
 ┌──────────────────────────────────────┐
-│  GPT-5.2-chat (RAG synthesis)        │
+│  GPT-5.2-mini (RAG synthesis)        │
 │  - Grounded in retrieved chunks      │
 │  - Structured JSON output            │
 │  - Source citations                  │
@@ -672,7 +672,7 @@ def query_policy_index(
     query: str,
     *,
     project_endpoint: str,
-    model_deployment: str = "gpt-5.2-chat",
+    model_deployment: str = "GPT-5.2-mini",
     index_name: str = "policy-knowledge",
     top_k: int = 5,
 ) -> dict[str, str | list[str]]:
@@ -744,7 +744,7 @@ def query_policy_index(
 | Azure AI Foundry (AIServices) | Hosts the project, embedding model, and GPT |
 | text-embedding-3 Deployment | Generates vector embeddings for policy chunks |
 | FoundryIQ Knowledge Index | Persistent vector store with semantic search API |
-| GPT-5.2-chat Deployment | Synthesizes grounded answers from retrieved chunks |
+| GPT-5.2-mini Deployment | Synthesizes grounded answers from retrieved chunks |
 
 Estimated cost: **~$50–150/month** (embedding generation + index storage + GPT queries).
 
@@ -793,7 +793,7 @@ FoundryIQ acts as the **long-term memory layer** — policies are ingested once 
 │  parse_policy_md.py          │  │  E. FoundryIQ Knowledge Index                 │
 │  → canonical structured JSON │  │  - text-embedding-3 → vector index            │
 └──────────────────────────────┘  │  - Semantic search (RAG)                      │
-                                  │  - GPT-5.2-chat grounded synthesis            │
+                                  │  - GPT-5.2-mini grounded synthesis            │
                                   │  → query-time policy retrieval & Q&A          │
                                   └───────────────────────────────────────────────┘
 ```

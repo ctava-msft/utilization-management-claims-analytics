@@ -91,7 +91,7 @@ graph LR
     %% ───────────────────────────────────────────
     subgraph LLM_SERVICE["Azure AI Foundry"]
         direction TB
-        GPT["🧠 GPT-5.2-chat<br/><i>temperature=0 · seed pinned<br/>Summarise CPT-code joins<br/>Anomaly explanations</i>"]
+        GPT["🧠 GPT-5.2-mini<br/><i>temperature=0 · seed pinned<br/>Summarise CPT-code joins<br/>Anomaly explanations</i>"]
     end
 
     %% ───────────────────────────────────────────
@@ -154,7 +154,7 @@ graph LR
 | **Compute** | **VDI** (Virtual Desktop Infrastructure) — solution architect works within a managed virtual desktop. |
 | **Identity** | **User Managed Identity** assigned to the VDI; used for authenticating to Storage, Foundry, Fabric, and Foundry LLM endpoints. |
 | **Pipeline execution** | A **solution architect** uses **VSCode with GitHub Copilot (GPT-5.3-Codex)** on the VDI to run the `um-claims run-all` pipeline. The script reads **de-identified** claims and structured policy data from the Fabric Lakehouse, joins them on CPT codes, and sends the join results to **Azure AI Foundry (GPT-5.2-mini)** for summarisation — producing anomaly explanations, plain-language findings, and flag recommendations. Results are **written back to the Fabric Lakehouse** (UM insights, flags, and alerts tables) so they can be reported on, in addition to local Markdown/JSON output files. |
-| **LLM role** | **GPT-5.2-chat** (Azure AI Foundry) is called by the Python script to summarise and interpret CPT-code linkages between de-identified claims and policy data. The model generates human-readable explanations that the solution architect reviews. **No PHI is sent to the LLM.** |
+| **LLM role** | **GPT-5.2-mini** (Azure AI Foundry) is called by the Python script to summarise and interpret CPT-code linkages between de-identified claims and policy data. The model generates human-readable explanations that the solution architect reviews. **No PHI is sent to the LLM.** |
 | **LLM determinism** | All Foundry LLM calls enforce **`temperature=0`** and a **fixed `seed`** parameter so that LLM summaries do not vary across runs. This aligns with the project's determinism and reproducibility requirement. |
 | **Data privacy** | All claims data is **de-identified in Snowflake before extraction**. No PHI is present in the Lakehouse, on the VDI, in LLM prompts, or in any output artefact. |
 | **Networking** | VDI is accessed through the customer's managed virtual desktop infrastructure; no direct internet exposure. |
@@ -248,7 +248,7 @@ graph LR
     %% ───────────────────────────────────────────
     subgraph LLM_SERVICE["Azure AI Foundry"]
         direction TB
-        GPT["🧠 GPT-5.2-chat<br/><i>temperature=0 · seed pinned<br/>Summarise CPT-code joins<br/>Anomaly explanations</i>"]
+        GPT["🧠 GPT-5.2-mini<br/><i>temperature=0 · seed pinned<br/>Summarise CPT-code joins<br/>Anomaly explanations</i>"]
     end
 
     %% ───────────────────────────────────────────
@@ -333,7 +333,7 @@ graph LR
 | Aspect | Detail |
 |---|---|
 | **Compute** | **AKS private cluster** running the [Azure Agents Control Plane](https://github.com/microsoft/azure-agents-control-plane/). VM/Bastion retained for admin access. |
-| **Agent runtime** | **Python FastAPI application** deployed as pods on AKS. The FastAPI agents automate the same CPT-code join analysis and **GPT-5.2-chat summarisation** that the solution architect performs manually in the POC — running continuously, at scale, and exposed via REST API. All input data is de-identified; **no PHI enters the agents or the LLM**. Results (UM insights, flags, alerts) are **written back to the Fabric Lakehouse** for Power BI reporting. |
+| **Agent runtime** | **Python FastAPI application** deployed as pods on AKS. The FastAPI agents automate the same CPT-code join analysis and **GPT-5.2-mini summarisation** that the solution architect performs manually in the POC — running continuously, at scale, and exposed via REST API. All input data is de-identified; **no PHI enters the agents or the LLM**. Results (UM insights, flags, alerts) are **written back to the Fabric Lakehouse** for Power BI reporting. |
 | **LLM determinism** | All Foundry LLM calls enforce **`temperature=0`** and a **fixed `seed`** parameter. Summaries are reproducible across runs given the same input data. |
 | **Load Balancing** | **F5** sits in front of AKS providing TLS termination and traffic management. |
 | **Identity** | **User Managed Identity** on both AKS and the VM; used for all Azure service authentication (Storage, Foundry, Fabric, Key Vault). No service-principal secrets stored. |
@@ -437,6 +437,28 @@ Regardless of which data movement option is used, the **Fabric Lakehouse** serve
 - **AKS agents** (Production) — read/write via Private Link.
 - **Power BI** (POC & Production) — connects via **DirectLake mode**, reading Delta/Parquet tables (including UM output tables) directly from OneLake with no import or DirectQuery overhead.
 
+### Customer Managed Keys (CMK) for Fabric
+
+Microsoft Fabric supports **Customer Managed Keys (CMK)** for encryption of data at rest, giving the customer full control over the encryption keys used to protect claims and policy data in OneLake.
+
+| Aspect | Details |
+|---|---|
+| **Key store** | **Azure Key Vault** (Premium SKU recommended for HSM-backed keys). The same Key Vault used for other pipeline secrets can host the CMK, or a dedicated vault can be provisioned. |
+| **Scope** | CMK applies at the **Fabric capacity** level. All workspaces and lakehouses under that capacity inherit the customer-managed encryption. |
+| **Key rotation** | Fabric supports **automatic key rotation** — when a new key version is created in Key Vault, Fabric picks it up transparently with no downtime. Manual rotation is also supported. |
+| **Access model** | Fabric accesses the key via a **system-assigned managed identity** on the Fabric capacity resource. The customer grants `Key Vault Crypto Service Encryption User` (or equivalent wrap/unwrap permissions) to that identity. |
+| **Revocation** | Revoking key access immediately renders all data in the capacity unreadable — providing a **crypto-shred** capability if required by compliance or incident response. |
+| **Compliance** | CMK satisfies HIPAA, SOC 2, and organizational InfoSec requirements for customer-controlled encryption key management, even though no PHI is stored in the Lakehouse. |
+
+> **Setup steps (summary):**
+> 1. Create or designate an Azure Key Vault (Premium) with soft-delete and purge-protection enabled.
+> 2. Generate an RSA 2048+ key in the vault.
+> 3. In the Fabric admin portal, navigate to the capacity → **Encryption** → select **Customer Managed Key** → point to the Key Vault URI and key name.
+> 4. Grant the Fabric capacity's managed identity `Key Vault Crypto Service Encryption User` role on the vault.
+> 5. Validate by confirming the capacity status shows CMK active.
+
+> **Note:** CMK for Fabric is available on **Fabric F SKUs** (F64 and above). Verify SKU eligibility before planning CMK enablement.
+
 ### Data Flow
 
 ```
@@ -465,8 +487,8 @@ The **Azure Agents Control Plane** runs on a **private AKS cluster** and orchest
 | Capability | Description |
 |---|---|
 | **Agent Orchestrator** | Routes requests to the appropriate agent(s), manages multi-turn state, and handles tool-calling dispatch. |
-| **UM Analytics Agents (FastAPI)** | Python FastAPI services for detection, policy simulation, appeals analysis, and benchmarking. Each agent reads **de-identified** claims + policy data from the Fabric Lakehouse, joins on CPT codes, and calls **Azure AI Foundry (GPT-5.2-chat)** to summarise results — automating the work the solution architect does by hand in the POC. **No PHI enters the agents or the LLM.** |
-| **LLM Integration** | Calls **Azure AI Foundry GPT-5.2-chat** with **`temperature=0`** and a **fixed `seed`** to generate deterministic, plain-language summaries of CPT-code join results, anomaly explanations, and flag recommendations. All input to the LLM is de-identified. |
+| **UM Analytics Agents (FastAPI)** | Python FastAPI services for detection, policy simulation, appeals analysis, and benchmarking. Each agent reads **de-identified** claims + policy data from the Fabric Lakehouse, joins on CPT codes, and calls **Azure AI Foundry (GPT-5.2-mini)** to summarise results — automating the work the solution architect does by hand in the POC. **No PHI enters the agents or the LLM.** |
+| **LLM Integration** | Calls **Azure AI Foundry GPT-5.2-mini** with **`temperature=0`** and a **fixed `seed`** to generate deterministic, plain-language summaries of CPT-code join results, anomaly explanations, and flag recommendations. All input to the LLM is de-identified. |
 | **Tool Integration** | Queries the Fabric Lakehouse for combined de-identified claims + policy data over Private Link. Optionally calls FoundryIQ for policy RAG. |
 | **Scalability** | AKS provides horizontal pod autoscaling for burst workloads and node-level scaling for compute-intensive tasks. |
 | **Identity** | AKS pods use **User Managed Identity** (via workload identity federation) — no secrets in cluster. |
@@ -546,7 +568,7 @@ All resources required to stand up the proof-of-concept environment:
 | 4 | **Azure VM** | Standard_D4s_v5 (or similar) | Solution architect workstation — VSCode + GitHub Copilot (GPT-5.3-Codex) for running `um-claims` pipeline |
 | 5 | **User Managed Identity** | — | Identity for VM; authenticates to all downstream services |
 | 6 | **Azure Storage Account** | Standard LRS | Raw policy document storage |
-| 7 | **Azure AI Foundry** (Project) | — | Hosts **GPT-5.2-chat** (`temperature=0`, fixed `seed`) for LLM summarisation, and optionally the `text-embedding-3` model for policy vectorization (if policy RAG is enabled). Single Foundry project for all model deployments. |
+| 7 | **Azure AI Foundry** (Project) | — | Hosts **GPT-5.2-mini** (`temperature=0`, fixed `seed`) for LLM summarisation, and optionally the `text-embedding-3` model for policy vectorization (if policy RAG is enabled). Single Foundry project for all model deployments. |
 | 8 | **FoundryIQ** *(optional)* | — | Knowledge index and grounding store over policy embeddings (only if policy RAG is enabled) |
 | 9 | **Microsoft Fabric Capacity** | F2 or higher | Hosts Lakehouse (de-identified claims + policy JSON), OneLake / ADLS Gen2 shortcuts |
 | 10 | **Azure Key Vault** | Standard | Stores connection strings and configuration secrets |

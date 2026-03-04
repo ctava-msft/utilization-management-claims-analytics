@@ -9,7 +9,7 @@
 
 | Persona | Role | How They Interact |
 |---|---|---|
-| **UM Analytics Agents (AI)** | Primary insight generators. Automated FastAPI services running on AKS that continuously read de-identified claims + policy data from the Lakehouse, perform CPT-code join analysis, call GPT-5.2-chat for summarisation, and write UM insights, flags, and alerts back to the Lakehouse. | Triggered by schedule, API call, or event → read Lakehouse → compute features → detect anomalies → call LLM → write results → expose via API. |
+| **UM Analytics Agents (AI)** | Primary insight generators. Automated FastAPI services running on AKS that continuously read de-identified claims + policy data from the Lakehouse, perform CPT-code join analysis, call GPT-5.2-mini for summarisation, and write UM insights, flags, and alerts back to the Lakehouse. | Triggered by schedule, API call, or event → read Lakehouse → compute features → detect anomalies → call LLM → write results → expose via API. |
 | **Agent Orchestrator** | Routes requests to the appropriate agent(s), manages multi-step workflows, and handles tool-calling dispatch across detection, policy simulation, appeals, and benchmarking agents. | Internal AKS service; not directly exposed to end users. |
 | **UM Analyst** | Primary consumer. Reviews Power BI dashboards, investigates flagged anomalies, evaluates policy effectiveness, and provides feedback on detection accuracy. | Opens Power BI → explores UM dashboards → drills into flagged providers/suppliers → reviews LLM-generated explanations. |
 | **UM Director** | Executive consumer. Reviews summary dashboards for strategic decisions — policy changes, resource allocation, fraud investigation prioritisation. | Reviews high-level Power BI dashboards → reads policy impact summaries → approves/rejects policy change recommendations. |
@@ -28,14 +28,14 @@
 **Preconditions:**
 - De-identified claims data is current in the Fabric Lakehouse.
 - Structured policy JSON is present in the Lakehouse.
-- Azure AI Foundry deployment (GPT-5.2-chat) is active with `temperature=0` and fixed `seed`.
+- Azure AI Foundry deployment (GPT-5.2-mini) is active with `temperature=0` and fixed `seed`.
 
 **Flow:**
 1. Agent orchestrator triggers the detection pipeline (on schedule or via API).
 2. Detection agent reads de-identified claims and policy data from the Lakehouse via Private Link.
 3. Feature engineering computes provider, facility, and temporal metrics.
 4. Detection rules flag outliers, OON DME clusters, billing anomalies, and new-entity volume spikes.
-5. Flagged results (CPT-code joins + rule evidence) are sent to GPT-5.2-chat (`temperature=0`, fixed `seed`) for summarisation.
+5. Flagged results (CPT-code joins + rule evidence) are sent to GPT-5.2-mini (`temperature=0`, fixed `seed`) for summarisation.
 6. GPT returns plain-language anomaly explanations and flag recommendations.
 7. Agent writes UM insights, flags, and alerts as Delta tables back to the Lakehouse.
 8. Power BI dashboards refresh via DirectLake.
@@ -90,7 +90,7 @@
 1. Policy simulation agent reads claims data before and after the effective date.
 2. Computes pre/post metrics: volume, cost, denial rate, OON rate for affected services.
 3. Detects rebound patterns (utilisation returning to pre-change levels).
-4. Sends results to GPT-5.2-chat for plain-language impact summary.
+4. Sends results to GPT-5.2-mini for plain-language impact summary.
 5. Writes policy impact table and LLM summary to the Lakehouse.
 6. UM director reviews the policy impact dashboard in Power BI.
 
@@ -216,7 +216,7 @@
 
 | Parameter | Value | Rationale |
 |---|---|---|
-| **Model** | GPT-5.2-chat (Azure AI Foundry, Private Endpoint) | Customer-approved model; accessed only over private network. |
+| **Model** | GPT-5.2-mini (Azure AI Foundry, Private Endpoint) | Customer-approved model; accessed only over private network. |
 | **`temperature`** | `0` | Eliminates sampling randomness; ensures deterministic completions. |
 | **`seed`** | Fixed integer (configurable per deployment) | Combined with `temperature=0`, maximises output reproducibility. |
 | **`max_tokens`** | Capped per prompt type | Prevents runaway token usage; tuned per agent. |
