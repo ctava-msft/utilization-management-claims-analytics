@@ -1,7 +1,7 @@
 # Specification — POC (Approach A)
 
 > Personas, use cases, and acceptance criteria for the **POC deployment** of the UM Claims Analytics platform.
-> The POC runs on a **VDI** (Virtual Desktop Infrastructure) where a **solution architect / solution engineer** uses **VSCode with GitHub Copilot (Claude Opus 4.6, fast mode)** to drive the analytics pipeline.
+> The POC runs on a **VDI** (Virtual Desktop Infrastructure) where a **solution architect / solution engineer** uses **VSCode with GitHub Copilot (GPT-5.3-Codex)** to drive the analytics pipeline.
 
 ---
 
@@ -9,7 +9,7 @@
 
 | Persona | Role | How They Interact |
 |---|---|---|
-| **Solution Architect** | Primary operator. Uses VSCode with GitHub Copilot (Claude Opus 4.6, fast mode) on the VDI, reviews LLM-generated summaries, validates flags, and iterates on pipeline configuration. | Connects to the VDI → runs `um-claims run-all` from VSCode → reviews Markdown reports and JSON flag files on the VDI filesystem. |
+| **Solution Architect** | Primary operator. Uses VSCode with GitHub Copilot (GPT-5.3-Codex) on the VDI, reviews LLM-generated summaries, validates flags, and iterates on pipeline configuration. | Connects to the VDI → runs `um-claims run-all` from VSCode → reviews Markdown reports and JSON flag files on the VDI filesystem. |
 | **Solution Engineer** | Extends the pipeline — adds new detection rules, adapts schema mappings for customer data shapes, tunes thresholds. Tests changes locally before pushing to the VDI. | Develops locally or on the VDI → runs `pytest` → pushes updates → re-runs the pipeline to validate. |
 | **Data Engineer** | Prepares the de-identified claims extract in Snowflake and configures the OneLake shortcut (Option A) or ADF pipeline (Option B). | Works in Snowflake / ADF → validates data lands in the Fabric Lakehouse → hands off to the solution architect. |
 | **UM Analyst** | Consumes the output reports and flags produced by the solution architect. Provides domain feedback on flag relevance and threshold tuning. | Reviews Markdown reports / JSON files shared by the solution architect. May also view Lakehouse tables in Power BI (if available). |
